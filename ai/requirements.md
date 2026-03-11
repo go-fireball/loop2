@@ -2,50 +2,25 @@
 
 ## Objective
 
-Create a lightweight, governed AI software delivery loop that is role-based,
-baton-driven, and file-state-driven.
+<!-- PRODUCT_OWNER: replace this with requirements derived from ai/goal.yaml -->
+<describe the product objective from the project goal>
 
 ## In Scope
 
-- Migration and modernization work
-- Bug fixes
-- Feature delivery
-- Refactoring
-- Documentation-driven engineering tasks
+- <scope item derived from goal>
 
-## Operating Model
+## Out of Scope
 
-Sequence through roles:
-1. PRODUCT_OWNER
-2. SENIOR_JUDGMENTAL_ENGINEER
-3. ARCHITECT
-4. PLANNER
-5. DEV
-6. VALIDATOR
-7. REVIEWER
-
-Baton authority is `ai/active_agent.txt`.
-Role instructions are sourced via `ai/next_agent.yaml`.
-Each role reads required files, edits only allowed files, then hands off explicitly.
-
-## Human-In-The-Loop Boundaries
-
-Ask the user only for:
-1. Goal clarification
-2. Requirement ambiguity
-3. Architecture exceptions
-4. Parity exceptions
-5. Major tradeoffs
+- Governance loop internals (already bootstrapped)
 
 ## Constraints
 
-- No phase-heavy engine
-- No autonomous background runtime
-- No unnecessary microservices
-- No clever abstractions disconnected from item scope
+- <constraints from ai/goal.yaml>
 
-## Success Criteria
+## Acceptance Criteria
 
-- Deterministic baton handoff
-- Fresh-session friendly execution
-- Judgment-guided delivery with low overhead
+- <testable condition from goal success_criteria>
+
+## Open Questions
+
+- <only unresolved questions that require user clarification>

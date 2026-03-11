@@ -383,12 +383,11 @@ write_if_missing "ai/next_agent.md" "# Next Agent
 - Execution command for Codex sessions: **Follow \`ai/next_agent.yaml\` exactly.**
 - If role mismatch with \`ai/active_agent.txt\`, print: \`WAITING FOR BATON\`"
 
-write_if_missing "ai/goal.yaml" "project_goal: Stand up a governed, role-based AI delivery loop repository
+write_if_missing "ai/goal.yaml" "# Edit this file to define your project goal before running the baton loop.
+project_goal: <describe what you want to build>
 success_criteria:
-  - All core governance files exist under ai/
-  - Every role has a strict operational prompt with baton and file ownership checks
-  - Codex can run each turn by following ai/next_agent.yaml
-  - Optional baton runner can automate multi-step execution safely
+  - <testable outcome 1>
+  - <testable outcome 2>
 context_notes:
   - Codex-first execution model
   - State lives in files, not chat memory
@@ -430,15 +429,17 @@ stop_rules:
   - if human clarification is needed, print exactly WAITING FOR USER
   - always append an iteration log entry before handoff"
 
-write_if_missing "ai/backlog.yaml" "items:
-  - id: ITEM-0001
-    title: Scaffold governed baton loop repository
-    goal: Establish the full ai/, scripts/, and governance baseline for immediate use
-    type: feature
-    status: todo
-    priority: high
-    dependencies: []
-    notes: []"
+write_if_missing "ai/backlog.yaml" "items: []
+# Example format — PRODUCT_OWNER creates real items from ai/goal.yaml:
+#  - id: ITEM-0001
+#    title: Build user authentication
+#    goal: Allow users to sign in with email and password
+#    type: feature
+#    status: todo
+#    priority: high
+#    dependencies: []
+#    notes:
+#      - Python 3 only, no external dependencies"
 
 write_if_missing "ai/active_item.yaml" "id: null
 title: null
@@ -460,53 +461,28 @@ write_if_missing "ai/requirements.md" "# Requirements (One Pager)
 
 ## Objective
 
-Create a lightweight, governed AI software delivery loop that is role-based,
-baton-driven, and file-state-driven.
+<!-- PRODUCT_OWNER: replace this with requirements derived from ai/goal.yaml -->
+<describe the product objective from the project goal>
 
 ## In Scope
 
-- Migration and modernization work
-- Bug fixes
-- Feature delivery
-- Refactoring
-- Documentation-driven engineering tasks
+- <scope item derived from goal>
 
-## Operating Model
+## Out of Scope
 
-Sequence through roles:
-1. PRODUCT_OWNER
-2. SENIOR_JUDGMENTAL_ENGINEER
-3. ARCHITECT
-4. PLANNER
-5. DEV
-6. VALIDATOR
-7. REVIEWER
-
-Baton authority is \`ai/active_agent.txt\`.
-Role instructions are sourced via \`ai/next_agent.yaml\`.
-Each role reads required files, edits only allowed files, then hands off explicitly.
-
-## Human-In-The-Loop Boundaries
-
-Ask the user only for:
-1. Goal clarification
-2. Requirement ambiguity
-3. Architecture exceptions
-4. Parity exceptions
-5. Major tradeoffs
+- Governance loop internals (already bootstrapped)
 
 ## Constraints
 
-- No phase-heavy engine
-- No autonomous background runtime
-- No unnecessary microservices
-- No clever abstractions disconnected from item scope
+- <constraints from ai/goal.yaml>
 
-## Success Criteria
+## Acceptance Criteria
 
-- Deterministic baton handoff
-- Fresh-session friendly execution
-- Judgment-guided delivery with low overhead"
+- <testable condition from goal success_criteria>
+
+## Open Questions
+
+- <only unresolved questions that require user clarification>"
 
 write_if_missing "ai/review.md" "# Review Notes
 
