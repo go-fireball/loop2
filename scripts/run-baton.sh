@@ -88,9 +88,9 @@ build_exec_cmd() {
   case "$EXECUTOR" in
     codex)
       echo "codex"
+      echo "exec"
       echo "--model"
       echo "$MODEL"
-      echo "-q"
       if [[ $FULL_AUTO -eq 1 ]]; then
         echo "--full-auto"
       fi
