@@ -10,6 +10,7 @@ EXECUTOR=""
 MODEL=""
 DRY_RUN=0
 FULL_AUTO=1
+GIT_ENABLED=1
 
 PROMPT="Follow ai/next_agent.yaml exactly."
 
@@ -22,6 +23,7 @@ Options:
   --model <model>                     Model override (default depends on executor)
   --max-steps <n>                     Maximum baton steps (default: 10)
   --no-full-auto                      Stop after one handoff
+  --no-git                            Disable branch-per-iteration git commits
   --dry-run                           Print the command that would run, then exit
   --help                              Show this help
 
@@ -30,11 +32,16 @@ Default models per executor:
   claude   → claude-sonnet-4-6
   copilot  → claude-sonnet-4-6
 
+Branch-per-iteration:
+  Each run creates a git branch (iter/<ITEM-ID> or iter/<timestamp>) and
+  auto-commits after every baton step. Disable with --no-git.
+
 Examples:
   ./scripts/run-baton.sh --executor claude
   ./scripts/run-baton.sh --executor claude --model claude-opus-4-6
   ./scripts/run-baton.sh --executor codex --model o3 --max-steps 5
   ./scripts/run-baton.sh --executor copilot --dry-run
+  ./scripts/run-baton.sh --executor claude --no-git
 USAGE
   exit 0
 }
@@ -46,6 +53,7 @@ while [[ $# -gt 0 ]]; do
     --model)      MODEL="$2"; shift 2 ;;
     --max-steps)  MAX_STEPS="$2"; shift 2 ;;
     --no-full-auto) FULL_AUTO=0; shift ;;
+    --no-git)     GIT_ENABLED=0; shift ;;
     --dry-run)    DRY_RUN=1; shift ;;
     --help)       usage ;;
     *) echo "Unknown flag: $1"; echo "Run with --help for usage."; exit 1 ;;
@@ -120,11 +128,89 @@ check_cli() {
   fi
 }
 
+# ── Branch-per-iteration ──
+# Creates a branch for this iteration and auto-commits after each step.
+ITER_BRANCH=""
+SOURCE_BRANCH=""
+
+setup_iter_branch() {
+  if [[ $GIT_ENABLED -eq 0 ]]; then
+    return
+  fi
+
+  # Ensure we're in a git repo
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "Warning: not a git repo; disabling branch-per-iteration." | tee -a ai/logs/baton.log
+    GIT_ENABLED=0
+    return
+  fi
+
+  # Fail if working tree is dirty — don't mix user changes with iteration commits
+  if ! git diff --quiet || ! git diff --cached --quiet; then
+    echo "Warning: uncommitted changes detected; disabling branch-per-iteration." | tee -a ai/logs/baton.log
+    echo "Commit or stash your changes first to enable git tracking." | tee -a ai/logs/baton.log
+    GIT_ENABLED=0
+    return
+  fi
+
+  SOURCE_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+
+  # Derive branch name from active item ID, fall back to timestamp
+  local item_id
+  item_id="$(grep '^id:' ai/active_item.yaml 2>/dev/null | head -1 | sed 's/^id:[[:space:]]*//')"
+  if [[ -z "$item_id" || "$item_id" == "null" ]]; then
+    item_id="run-$(date -u +%Y%m%d-%H%M%S)"
+  fi
+
+  ITER_BRANCH="iter/${item_id}"
+
+  # If branch already exists, append a counter
+  if git rev-parse --verify "$ITER_BRANCH" >/dev/null 2>&1; then
+    local counter=2
+    while git rev-parse --verify "${ITER_BRANCH}-${counter}" >/dev/null 2>&1; do
+      ((counter++))
+    done
+    ITER_BRANCH="${ITER_BRANCH}-${counter}"
+  fi
+
+  git checkout -b "$ITER_BRANCH"
+  echo "Created iteration branch: $ITER_BRANCH (from $SOURCE_BRANCH)" | tee -a ai/logs/baton.log
+}
+
+# Commit all changes after a baton step
+commit_step() {
+  local step_num="$1"
+  local role="$2"
+
+  if [[ $GIT_ENABLED -eq 0 ]]; then
+    return
+  fi
+
+  # Only commit if there are changes
+  if git diff --quiet && git diff --cached --quiet && [[ -z "$(git ls-files --others --exclude-standard)" ]]; then
+    echo "[$step_num] No changes to commit." | tee -a ai/logs/baton.log
+    return
+  fi
+
+  git add -A
+  git commit -m "$(cat <<EOF
+baton step $step_num: $role
+
+Executor: $EXECUTOR | Model: $MODEL
+Branch: $ITER_BRANCH
+EOF
+  )"
+  echo "[$step_num] Committed changes for role: $role" | tee -a ai/logs/baton.log
+}
+
 # ── Initial baton validation ──
 if ! ./scripts/check-baton.sh; then
   echo "Baton state is invalid; cannot start." | tee -a ai/logs/baton.log
   exit 1
 fi
+
+# ── Set up iteration branch after validation passes ──
+setup_iter_branch
 
 for ((step=1; step<=MAX_STEPS; step++)); do
   ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
@@ -154,33 +240,42 @@ for ((step=1; step<=MAX_STEPS; step++)); do
 
   cat "$step_log" >> ai/logs/baton.log
 
+  # Read the current role for commit messages
+  current_role="$(cat ai/active_agent.txt 2>/dev/null || echo "UNKNOWN")"
+
   if [[ $rc -ne 0 ]]; then
     echo "$EXECUTOR command failed (exit $rc); stopping." | tee -a ai/logs/baton.log
+    commit_step "$step" "$current_role (failed)"
     rm -f "$step_log"
     exit 1
   fi
 
   if grep -q "WAITING FOR USER" "$step_log"; then
     echo "Stopped: WAITING FOR USER" | tee -a ai/logs/baton.log
+    commit_step "$step" "$current_role (waiting for user)"
     rm -f "$step_log"
     exit 0
   fi
 
   if grep -q "WAITING FOR BATON" "$step_log"; then
     echo "Stopped: WAITING FOR BATON" | tee -a ai/logs/baton.log
+    commit_step "$step" "$current_role (waiting for baton)"
     rm -f "$step_log"
     exit 0
   fi
 
   if grep -q "HANDOFF TO " "$step_log"; then
+    commit_step "$step" "$current_role"
     rm -f "$step_log"
     [[ $FULL_AUTO -eq 1 ]] || { echo "Stopped due to --no-full-auto after one handoff." | tee -a ai/logs/baton.log; exit 0; }
     continue
   fi
 
   echo "Unexpected output; stopping safely." | tee -a ai/logs/baton.log
+  commit_step "$step" "$current_role (unexpected)"
   rm -f "$step_log"
   exit 1
 done
 
 echo "Reached max steps (${MAX_STEPS}); stopping safely." | tee -a ai/logs/baton.log
+commit_step "final" "max-steps-reached"

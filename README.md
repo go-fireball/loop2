@@ -85,7 +85,20 @@ After REVIEWER:
 - `--model <model>` — model override (default depends on executor)
 - `--max-steps <n>` — maximum baton steps (default: 10)
 - `--no-full-auto` — stop after one handoff
+- `--no-git` — disable branch-per-iteration git commits
 - `--dry-run` — print the command that would run, then exit
+
+### Branch-per-iteration
+
+Each run automatically creates a git branch (`iter/<ITEM-ID>`) and commits after every baton step. This gives you:
+
+- Full history of every role's changes per work item
+- Safe rollback — `git diff main..iter/ITEM-0001` to review, `git branch -D iter/ITEM-0001` to discard
+- Clean main branch — merge only when the iteration is fully reviewed
+
+If the active item has no ID yet, the branch is named `iter/run-<timestamp>`. If the working tree has uncommitted changes, git tracking is automatically disabled with a warning.
+
+Disable with `--no-git` if you prefer manual version control.
 
 ### Safe stop conditions
 
