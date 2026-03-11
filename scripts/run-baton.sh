@@ -104,11 +104,8 @@ build_exec_cmd() {
       echo "$PROMPT"
       ;;
     copilot)
-      echo "gh"
       echo "copilot"
-      echo "suggest"
-      echo "-t"
-      echo "shell"
+      echo "-p"
       echo "$PROMPT"
       ;;
   esac
@@ -120,7 +117,7 @@ check_cli() {
   case "$EXECUTOR" in
     codex)   cli="codex" ;;
     claude)  cli="claude" ;;
-    copilot) cli="gh" ;;
+    copilot) cli="copilot" ;;
   esac
   if ! command -v "$cli" >/dev/null 2>&1; then
     echo "$cli CLI not found; install it before using --executor $EXECUTOR." | tee -a ai/logs/baton.log
