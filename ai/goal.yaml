@@ -4,9 +4,7 @@ success_criteria:
   - <testable outcome 1>
   - <testable outcome 2>
 context_notes:
-  - Codex-first execution model
-  - State lives in files, not chat memory
-  - Human-in-the-loop only for high-level decisions
+  - <any additional context, preferences, or background the AI should know>
 constraints:
   - No autonomous background runtime
   - No heavy phase orchestration engine
