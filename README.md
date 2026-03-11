@@ -35,7 +35,22 @@ After REVIEWER:
 - Revise -> role that must fix gaps
 - Escalate -> stop for human (`WAITING FOR USER`)
 
-## Start the loop
+## Quick start (new project)
+
+Run this in an empty project directory:
+
+```bash
+curl -sO https://raw.githubusercontent.com/sundaram/loop2/main/init.sh
+bash init.sh                # defaults to PRODUCT_OWNER
+# or
+bash init.sh ARCHITECT      # start from a different role
+```
+
+This clones the repo temporarily, copies `scripts/` and `ai/defaults/` into your project, and runs bootstrap to populate `ai/` with the seed files.
+
+## Start the loop (existing checkout)
+
+If you already have the repo cloned:
 
 1. Bootstrap state:
    ```bash
@@ -61,7 +76,7 @@ After REVIEWER:
 |----------|-------------|---------------|
 | `codex` | `codex` | `gpt-5.4` |
 | `claude` | `claude` | `claude-sonnet-4-6` |
-| `copilot` | `gh` (with Copilot extension) | `claude-sonnet-4-6` |
+| `copilot` | `copilot` | `claude-sonnet-4-6` |
 
 ### Usage
 
@@ -133,3 +148,18 @@ To reduce context bleed:
 ## Extensibility
 
 The runner supports Codex, Claude, and Copilot as executors via `--executor`. All three share the same file contract (`ai/active_agent.txt`, `ai/next_agent.yaml`, prompts, and logs). To add a new executor, extend the `build_exec_cmd` and `check_cli` functions in `scripts/run-baton.sh`.
+
+## Project structure
+
+```
+ai/defaults/          # Seed files — the single source of truth for bootstrap
+  prompts/            # Role prompt files (00-product-owner.md, etc.)
+  templates/          # YAML/MD templates for backlog items, decisions, etc.
+  iterations/         # Initial iteration log
+  logs/               # Initial baton log
+  *.yaml / *.md       # State file defaults (goal, judgment, constitution, etc.)
+scripts/              # Bootstrap, baton runner, checks, and helpers
+init.sh               # One-liner setup for new projects
+```
+
+`bootstrap.sh` copies `ai/defaults/*` into `ai/` (skip-if-exists), then generates the three dynamic files (`active_agent.txt`, `next_agent.yaml`, `next_agent.md`) based on the starting role.
