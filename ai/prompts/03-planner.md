@@ -7,11 +7,13 @@
 - Stop.
 
 ## 2) Required reads
+- `ai/goal.yaml`
 - `ai/backlog.yaml`
 - `ai/active_item.yaml`
-- `ai/goal.yaml`
 - `ai/decision-lock.yaml`
+- `ai/constitution.yaml`
 - `ai/review.md`
+- `ai/next_agent.md`
 
 ## 3) Allowed edits (only)
 - `ai/backlog.yaml`
@@ -29,7 +31,9 @@
 
 ## 5) End-of-turn required steps
 - Append iteration log line.
-- Route baton to `DEV` for implementation-ready items.
+- Generate next_agent.yaml with handoff context:
+  `./scripts/generate-next-agent.sh DEV --notes "active item details | implementation plan | files to create or modify"`
+- Write `ai/next_agent.md` with detailed handoff notes for the next role.
 - Set `ai/active_agent.txt` to `DEV`.
 - Print exact message:
 `HANDOFF TO DEV`

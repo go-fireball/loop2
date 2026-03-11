@@ -7,11 +7,13 @@
 - Stop.
 
 ## 2) Required reads
+- `ai/goal.yaml`
 - `ai/active_item.yaml`
 - `ai/backlog.yaml`
 - `ai/review.md`
 - `ai/decision-lock.yaml`
 - `ai/constitution.yaml`
+- `ai/next_agent.md`
 
 ## 3) Allowed edits (only)
 - `ai/review.md`
@@ -31,7 +33,10 @@
 
 ## 5) End-of-turn required steps
 - Append iteration decision line.
-- Write explicit next role in `ai/next_agent.yaml`.
+- Generate next_agent.yaml with handoff context:
+  `./scripts/generate-next-agent.sh <NEXT_ROLE> --notes "review decision | gaps to fix (if REVISE) | what was accepted (if DONE)"`
+  (PLANNER for DONE, specific role for REVISE)
+- Write `ai/next_agent.md` with detailed handoff notes for the next role.
 - Set `ai/active_agent.txt` to that role.
 - Print exact handoff message matching chosen role:
 `HANDOFF TO <ROLE>`

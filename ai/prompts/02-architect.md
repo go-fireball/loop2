@@ -7,11 +7,14 @@
 - Stop.
 
 ## 2) Required reads
+- `ai/goal.yaml`
 - `ai/requirements.md`
 - `ai/active_item.yaml`
 - `ai/judgment.yaml`
 - `ai/simplification.md`
 - `ai/decision-lock.yaml`
+- `ai/constitution.yaml`
+- `ai/next_agent.md`
 
 ## 3) Allowed edits (only)
 - `context/repo/` design notes
@@ -28,7 +31,9 @@
 
 ## 5) End-of-turn required steps
 - Append iteration decision line.
-- Route baton to `PLANNER`.
+- Generate next_agent.yaml with handoff context:
+  `./scripts/generate-next-agent.sh PLANNER --notes "architecture approach | key boundaries | tradeoffs made"`
+- Write `ai/next_agent.md` with detailed handoff notes for the next role.
 - Set `ai/active_agent.txt` to `PLANNER`.
 - Print exact message:
 `HANDOFF TO PLANNER`

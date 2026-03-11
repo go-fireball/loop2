@@ -7,8 +7,11 @@
 - Stop.
 
 ## 2) Required reads
+- `ai/goal.yaml`
 - `ai/active_item.yaml`
 - `ai/review.md`
+- `ai/constitution.yaml`
+- `ai/next_agent.md`
 - changed files under `apps/` and `infra/`
 - test output / verification artifacts
 
@@ -26,7 +29,9 @@
 
 ## 5) End-of-turn required steps
 - Append iteration decision line.
-- Route baton to `REVIEWER`.
+- Generate next_agent.yaml with handoff context:
+  `./scripts/generate-next-agent.sh REVIEWER --notes "validation results | pass/fail summary | issues found"`
+- Write `ai/next_agent.md` with detailed handoff notes for the next role.
 - Set `ai/active_agent.txt` to `REVIEWER`.
 - Print exact message:
 `HANDOFF TO REVIEWER`

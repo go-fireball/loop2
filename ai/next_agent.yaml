@@ -1,16 +1,16 @@
-next_role: PRODUCT_OWNER
-prompt_file: ai/prompts/00-product-owner.md
+next_role: SENIOR_JUDGMENTAL_ENGINEER
+prompt_file: ai/prompts/01-senior-judgmental-engineer.md
 read:
-  - ai/goal.yaml
-  - ai/judgment.yaml
-  - ai/constitution.yaml
-  - ai/backlog.yaml
-  - ai/active_item.yaml
-  - ai/decision-lock.yaml
-  - ai/active_agent.txt
-allowed_edits:
   - ai/requirements.md
-  - ai/decision-lock.yaml
+  - ai/simplification.md
+  - ai/judgment.yaml
+  - ai/active_item.yaml
+  - ai/constitution.yaml
+  - ai/active_agent.txt
+  - ai/next_agent.md
+allowed_edits:
+  - ai/simplification.md
+  - ai/review.md
   - ai/iterations/ITER-0001.md
   - ai/active_agent.txt
   - ai/next_agent.yaml
@@ -19,7 +19,10 @@ stop_conditions:
   - WAITING FOR BATON when active agent mismatch
   - WAITING FOR USER when clarification is required
 success_criteria:
-  - requirements updated
-  - baton handed to SENIOR_JUDGMENTAL_ENGINEER
+  - judgment guardrails applied and scope validated
 handoff_on_success:
-  print_exact: HANDOFF TO SENIOR_JUDGMENTAL_ENGINEER
+  print_exact: HANDOFF TO ARCHITECT
+notes:
+  - Updated requirements for ITEM-0001
+  - Clarified scope to exclude mobile
+  - No blocking questions

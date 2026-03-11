@@ -14,6 +14,7 @@
 - `ai/decision-lock.yaml`
 - `ai/constitution.yaml`
 - `ai/judgment.yaml`
+- `ai/next_agent.md`
 
 ## 3) Allowed edits (only)
 - `ai/requirements.md`
@@ -32,8 +33,9 @@
 ## 5) End-of-turn required steps
 - Append one line to `ai/iterations/ITER-0001.md`:
   `Decision: <what changed> | Why: <one sentence>`
-- Write `ai/next_agent.yaml` for `SENIOR_JUDGMENTAL_ENGINEER`.
-- Optionally mirror handoff in `ai/next_agent.md`.
+- Generate next_agent.yaml with handoff context:
+  `./scripts/generate-next-agent.sh SENIOR_JUDGMENTAL_ENGINEER --notes "summary of what changed | key items to review | any risks or open questions"`
+- Write `ai/next_agent.md` with detailed handoff notes for the next role (what you did, what to focus on, any concerns).
 - Set `ai/active_agent.txt` to `SENIOR_JUDGMENTAL_ENGINEER`.
 - Print exact message:
 `HANDOFF TO SENIOR_JUDGMENTAL_ENGINEER`

@@ -7,11 +7,13 @@
 - Stop.
 
 ## 2) Required reads
+- `ai/goal.yaml`
 - `ai/requirements.md`
 - `ai/simplification.md`
 - `ai/judgment.yaml`
 - `ai/active_item.yaml`
 - `ai/constitution.yaml`
+- `ai/next_agent.md`
 
 ## 3) Allowed edits (only)
 - `ai/simplification.md`
@@ -29,7 +31,9 @@
 
 ## 5) End-of-turn required steps
 - Append decision log line in `ai/iterations/ITER-0001.md`.
-- Route next role to `ARCHITECT` in `ai/next_agent.yaml`.
+- Generate next_agent.yaml with handoff context:
+  `./scripts/generate-next-agent.sh ARCHITECT --notes "judgment summary | guardrails added | risks flagged"`
+- Write `ai/next_agent.md` with detailed handoff notes for the next role.
 - Set `ai/active_agent.txt` to `ARCHITECT`.
 - Print exact message:
 `HANDOFF TO ARCHITECT`

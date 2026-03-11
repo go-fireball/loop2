@@ -7,10 +7,13 @@
 - Stop.
 
 ## 2) Required reads
+- `ai/goal.yaml`
 - `ai/active_item.yaml`
 - `ai/requirements.md`
 - `ai/judgment.yaml`
 - `ai/simplification.md`
+- `ai/constitution.yaml`
+- `ai/next_agent.md`
 - Relevant files in `apps/`, `infra/`, `context/repo/`
 
 ## 3) Allowed edits (only)
@@ -31,7 +34,9 @@
 
 ## 5) End-of-turn required steps
 - Append iteration decision line.
-- Route baton to `VALIDATOR`.
+- Generate next_agent.yaml with handoff context:
+  `./scripts/generate-next-agent.sh VALIDATOR --notes "what was implemented | files changed | tests added | known risks"`
+- Write `ai/next_agent.md` with detailed handoff notes for the next role.
 - Set `ai/active_agent.txt` to `VALIDATOR`.
 - Print exact message:
 `HANDOFF TO VALIDATOR`
