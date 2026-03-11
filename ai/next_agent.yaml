@@ -1,0 +1,25 @@
+next_role: PRODUCT_OWNER
+prompt_file: ai/prompts/00-product-owner.md
+read:
+  - ai/goal.yaml
+  - ai/judgment.yaml
+  - ai/constitution.yaml
+  - ai/backlog.yaml
+  - ai/active_item.yaml
+  - ai/decision-lock.yaml
+  - ai/active_agent.txt
+allowed_edits:
+  - ai/requirements.md
+  - ai/decision-lock.yaml
+  - ai/iterations/ITER-0001.md
+  - ai/active_agent.txt
+  - ai/next_agent.yaml
+  - ai/next_agent.md
+stop_conditions:
+  - WAITING FOR BATON when active agent mismatch
+  - WAITING FOR USER when clarification is required
+success_criteria:
+  - requirements updated
+  - baton handed to SENIOR_JUDGMENTAL_ENGINEER
+handoff_on_success:
+  print_exact: HANDOFF TO SENIOR_JUDGMENTAL_ENGINEER

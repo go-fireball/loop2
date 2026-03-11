@@ -1,0 +1,9 @@
+items:
+  - id: ITEM-0001
+    title: Scaffold governed baton loop repository
+    goal: Establish the full ai/, scripts/, and governance baseline for immediate use
+    type: feature
+    status: todo
+    priority: high
+    dependencies: []
+    notes: []
