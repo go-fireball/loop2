@@ -19,11 +19,21 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-./scripts/check-baton.sh
+# ── Initial baton validation ──
+if ! ./scripts/check-baton.sh; then
+  echo "Baton state is invalid; cannot start." | tee -a ai/logs/baton.log
+  exit 1
+fi
 
 for ((step=1; step<=MAX_STEPS; step++)); do
   ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
   echo "[$ts] Step $step" | tee -a ai/logs/baton.log
+
+  # ── Pre-step validation ──
+  if ! ./scripts/check-baton.sh >/dev/null 2>&1; then
+    echo "[$ts] Baton state invalid before step $step; stopping." | tee -a ai/logs/baton.log
+    exit 1
+  fi
 
   if [[ $DRY_RUN -eq 1 ]]; then
     echo "DRY RUN: would invoke codex --model $MODEL \"Follow ai/next_agent.yaml exactly.\"" | tee -a ai/logs/baton.log
@@ -43,7 +53,7 @@ for ((step=1; step<=MAX_STEPS; step++)); do
   echo "$output" >> ai/logs/baton.log
 
   if [[ $rc -ne 0 ]]; then
-    echo "Codex command failed; stopping." | tee -a ai/logs/baton.log
+    echo "Codex command failed (exit $rc); stopping." | tee -a ai/logs/baton.log
     exit 1
   fi
 

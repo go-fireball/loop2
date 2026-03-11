@@ -1,7 +1,19 @@
-current_role: <ROLE>
+next_role: <ROLE>
 prompt_file: ai/prompts/<prompt-file>.md
-instruction: Follow this role prompt exactly. Respect baton ownership and allowed edits.
-active_item_source: ai/active_item.yaml
-handoff_rules:
-  on_complete: <NEXT_ROLE>
-  on_user_clarification_needed: WAITING_FOR_USER
+read:
+  - ai/goal.yaml
+  - ai/judgment.yaml
+  - ai/constitution.yaml
+  - ai/backlog.yaml
+  - ai/active_item.yaml
+  - ai/decision-lock.yaml
+  - ai/active_agent.txt
+allowed_edits:
+  - <list of files this role may edit>
+stop_conditions:
+  - WAITING FOR BATON when active agent mismatch
+  - WAITING FOR USER when clarification is required
+success_criteria:
+  - <what must be true for handoff>
+handoff_on_success:
+  print_exact: HANDOFF TO <NEXT_ROLE>

@@ -1,18 +1,15 @@
-version: 1
-rules:
-  - id: C-001
-    rule: State lives in files under ai/; chat memory is non-authoritative.
-  - id: C-002
-    rule: Baton ownership in ai/active_agent.txt is authoritative for execution rights.
-  - id: C-003
-    rule: Roles must not edit files outside their allowed edits list.
-  - id: C-004
-    rule: If active role mismatch is detected, output exactly WAITING FOR BATON and stop.
-  - id: C-005
-    rule: If human clarification is required, output exactly WAITING FOR USER and stop.
-  - id: C-006
-    rule: Every turn must write explicit next role routing to ai/next_agent.yaml.
-  - id: C-007
-    rule: Every turn must append one decision log line to ai/iterations/ITER-0001.md.
-  - id: C-008
-    rule: Judgments in ai/judgment.yaml constrain architecture and implementation choices.
+core_rules:
+  - state lives in files, not chat memory
+  - baton ownership is authoritative
+  - roles must not edit outside allowed files
+
+baton_rules:
+  - if active agent mismatch, print exactly WAITING FOR BATON
+  - baton must be handed off explicitly
+
+edit_rules:
+  - only edit allowed files listed in the current role prompt
+
+stop_rules:
+  - if human clarification is needed, print exactly WAITING FOR USER
+  - always append an iteration log entry before handoff

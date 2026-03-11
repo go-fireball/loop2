@@ -1,30 +1,9 @@
 items:
-  - id: LOOP-0001
+  - id: ITEM-0001
     title: Scaffold governed baton loop repository
-    goal: Establish the full ai/, scripts/, and governance baseline for immediate use.
-    type: feature
-    status: in_progress
-    priority: P0
-    dependencies: []
-    notes: Initialize all mandatory files and operational prompts.
-  - id: LOOP-0002
-    title: Add first real delivery item
-    goal: Use the loop to ship a small change and validate the process end-to-end.
+    goal: Establish the full ai/, scripts/, and governance baseline for immediate use
     type: feature
     status: todo
-    priority: P1
-    dependencies:
-      - LOOP-0001
-    notes: Should be selected by PLANNER after repository bootstrap is reviewed.
-schema:
-  required_fields:
-    - id
-    - title
-    - goal
-    - type
-    - status
-    - priority
-    - dependencies
-    - notes
-  type_enum: [migration, feature, bugfix, refactor, docs]
-  status_enum: [todo, in_progress, blocked, done]
+    priority: high
+    dependencies: []
+    notes: []

@@ -1,14 +1,14 @@
-goal_id: GOAL-0001
-title: Stand up a governed, role-based AI delivery loop repository
-north_star: >-
-  Deliver backlog items through a deterministic baton handoff model where state is
-  persisted in files and human input is only needed for high-level decisions.
+project_goal: Stand up a governed, role-based AI delivery loop repository
 success_criteria:
   - All core governance files exist under ai/
   - Every role has a strict operational prompt with baton and file ownership checks
   - Codex can run each turn by following ai/next_agent.yaml
   - Optional baton runner can automate multi-step execution safely
-non_goals:
-  - Autonomous background runtime
-  - Heavy phase orchestration engine
-  - Provider-specific complexity beyond Codex-first behavior
+context_notes:
+  - Codex-first execution model
+  - State lives in files, not chat memory
+  - Human-in-the-loop only for high-level decisions
+constraints:
+  - No autonomous background runtime
+  - No heavy phase orchestration engine
+  - No unnecessary microservices or clever abstractions

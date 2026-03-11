@@ -1,7 +1,5 @@
-confirmed_by_user:
-  goal: true
-  constraints: true
+confirmed_by_user: false
+blocked_on_user: false
+last_user_decision: null
 open_questions: []
 approved_exceptions: []
-blocked_on_user: false
-last_user_decision: Initialized repository scope and governance model for Codex-first loop.

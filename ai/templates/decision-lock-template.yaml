@@ -1,7 +1,5 @@
-confirmed_by_user:
-  goal: false
-  constraints: false
+confirmed_by_user: false
+blocked_on_user: false
+last_user_decision: null
 open_questions: []
 approved_exceptions: []
-blocked_on_user: false
-last_user_decision: <summary>
