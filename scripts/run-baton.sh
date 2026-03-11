@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 MAX_STEPS=10
-MODEL="gpt-5-codex"
+MODEL="gpt-5.4"
 DRY_RUN=0
 FULL_AUTO=1
 
@@ -45,34 +45,40 @@ for ((step=1; step<=MAX_STEPS; step++)); do
     exit 1
   fi
 
+  step_log="$(mktemp)"
   set +e
-  output="$(codex --model "$MODEL" "Follow ai/next_agent.yaml exactly." 2>&1)"
+  script -q -c "codex --model \"$MODEL\" \"Follow ai/next_agent.yaml exactly.\"" "$step_log"
   rc=$?
   set -e
 
-  echo "$output" >> ai/logs/baton.log
+  cat "$step_log" >> ai/logs/baton.log
 
   if [[ $rc -ne 0 ]]; then
     echo "Codex command failed (exit $rc); stopping." | tee -a ai/logs/baton.log
+    rm -f "$step_log"
     exit 1
   fi
 
-  if grep -q "WAITING FOR USER" <<<"$output"; then
+  if grep -q "WAITING FOR USER" "$step_log"; then
     echo "Stopped: WAITING FOR USER" | tee -a ai/logs/baton.log
+    rm -f "$step_log"
     exit 0
   fi
 
-  if grep -q "WAITING FOR BATON" <<<"$output"; then
+  if grep -q "WAITING FOR BATON" "$step_log"; then
     echo "Stopped: WAITING FOR BATON" | tee -a ai/logs/baton.log
+    rm -f "$step_log"
     exit 0
   fi
 
-  if grep -q "HANDOFF TO " <<<"$output"; then
+  if grep -q "HANDOFF TO " "$step_log"; then
+    rm -f "$step_log"
     [[ $FULL_AUTO -eq 1 ]] || { echo "Stopped due to --no-full-auto after one handoff." | tee -a ai/logs/baton.log; exit 0; }
     continue
   fi
 
   echo "Unexpected output; stopping safely." | tee -a ai/logs/baton.log
+  rm -f "$step_log"
   exit 1
 done
 
