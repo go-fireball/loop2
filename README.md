@@ -52,16 +52,43 @@ After REVIEWER:
 
 ## Optional automation runner
 
-`./scripts/run-baton.sh` repeatedly invokes Codex with:
+`./scripts/run-baton.sh` repeatedly invokes an AI executor with:
 `Follow ai/next_agent.yaml exactly.`
 
-Supported flags:
-- `--dry-run`
-- `--max-steps <n>`
-- `--model <model>`
-- `--no-full-auto`
+### Supported executors
 
-Safe stop conditions:
+| Executor | CLI required | Default model |
+|----------|-------------|---------------|
+| `codex` | `codex` | `gpt-5.4` |
+| `claude` | `claude` | `claude-sonnet-4-6` |
+| `copilot` | `gh` (with Copilot extension) | `claude-sonnet-4-6` |
+
+### Usage
+
+```bash
+# Run with Claude (default model)
+./scripts/run-baton.sh --executor claude
+
+# Run with Claude using a specific model
+./scripts/run-baton.sh --executor claude --model claude-opus-4-6
+
+# Run with Codex, limit steps
+./scripts/run-baton.sh --executor codex --model o3 --max-steps 5
+
+# Dry run to see what would execute
+./scripts/run-baton.sh --executor copilot --dry-run
+```
+
+### Flags
+
+- `--executor <codex|claude|copilot>` — AI executor to use (required)
+- `--model <model>` — model override (default depends on executor)
+- `--max-steps <n>` — maximum baton steps (default: 10)
+- `--no-full-auto` — stop after one handoff
+- `--dry-run` — print the command that would run, then exit
+
+### Safe stop conditions
+
 - `WAITING FOR USER`
 - `WAITING FOR BATON`
 - unexpected output
@@ -92,4 +119,4 @@ To reduce context bleed:
 
 ## Extensibility
 
-Codex is the initial executor. Future adapters for Claude and Copilot can be added later by extending runner invocation logic while keeping the same file contract (`ai/active_agent.txt`, `ai/next_agent.yaml`, prompts, and logs).
+The runner supports Codex, Claude, and Copilot as executors via `--executor`. All three share the same file contract (`ai/active_agent.txt`, `ai/next_agent.yaml`, prompts, and logs). To add a new executor, extend the `build_exec_cmd` and `check_cli` functions in `scripts/run-baton.sh`.
