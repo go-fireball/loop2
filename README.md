@@ -40,7 +40,7 @@ After REVIEWER:
 Run this in an empty project directory:
 
 ```bash
-curl -sO https://raw.githubusercontent.com/sundaram/loop2/main/init.sh
+curl -sO https://raw.githubusercontent.com/go-fireball/loop/main/init.sh
 bash init.sh                # defaults to PRODUCT_OWNER
 # or
 bash init.sh ARCHITECT      # start from a different role
