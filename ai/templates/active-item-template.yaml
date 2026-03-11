@@ -1,0 +1,10 @@
+id: LOOP-XXXX
+title: <active item title>
+goal: <item goal>
+status: in_progress
+owner_role: PLANNER
+related_files: []
+acceptance_criteria: []
+open_questions: []
+done_definition:
+  - <how reviewer determines done>

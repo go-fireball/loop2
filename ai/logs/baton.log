@@ -1,0 +1,4 @@
+# Baton run log
+# Timestamped entries from scripts/run-baton.sh are appended here.
+[2026-03-11T01:35:05Z] Step 1
+DRY RUN: would invoke codex --model gpt-5-codex "Follow ai/next_agent.yaml exactly."

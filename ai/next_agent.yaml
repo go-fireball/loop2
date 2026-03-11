@@ -1,0 +1,7 @@
+current_role: PRODUCT_OWNER
+prompt_file: ai/prompts/00-product-owner.md
+instruction: Follow this role prompt exactly. Respect baton ownership and allowed edits.
+active_item_source: ai/active_item.yaml
+handoff_rules:
+  on_complete: SENIOR_JUDGMENTAL_ENGINEER
+  on_user_clarification_needed: WAITING_FOR_USER

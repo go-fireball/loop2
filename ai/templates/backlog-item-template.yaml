@@ -1,0 +1,8 @@
+id: LOOP-XXXX
+title: <short title>
+goal: <single-sentence outcome>
+type: feature # migration | feature | bugfix | refactor | docs
+status: todo # todo | in_progress | blocked | done
+priority: P1
+dependencies: []
+notes: <implementation-neutral planning notes>

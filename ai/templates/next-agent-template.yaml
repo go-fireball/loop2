@@ -1,0 +1,7 @@
+current_role: <ROLE>
+prompt_file: ai/prompts/<prompt-file>.md
+instruction: Follow this role prompt exactly. Respect baton ownership and allowed edits.
+active_item_source: ai/active_item.yaml
+handoff_rules:
+  on_complete: <NEXT_ROLE>
+  on_user_clarification_needed: WAITING_FOR_USER

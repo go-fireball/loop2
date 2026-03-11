@@ -1,0 +1,19 @@
+id: LOOP-0001
+title: Scaffold governed baton loop repository
+goal: Build practical, deterministic baton files, prompts, and scripts for Codex-first execution.
+status: in_progress
+owner_role: PRODUCT_OWNER
+related_files:
+  - ai/
+  - scripts/
+  - README.md
+  - CONTRIBUTING.md
+acceptance_criteria:
+  - Core ai/ files and templates are present with usable starter content.
+  - All role prompts enforce baton check, read scope, edit scope, and handoff.
+  - Runner scripts support bootstrap, validation, and safe baton automation.
+  - Documentation explains usage, guardrails, and loop termination clearly.
+open_questions:
+  - None yet.
+done_definition:
+  - Repository can be used in a fresh Codex session with only: Follow ai/next_agent.yaml exactly.
