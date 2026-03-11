@@ -8,6 +8,7 @@ read:
   - ai/active_item.yaml
   - ai/decision-lock.yaml
   - ai/active_agent.txt
+  - ai/next_agent.md
 allowed_edits:
   - <list of files this role may edit>
 stop_conditions:
