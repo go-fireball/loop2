@@ -529,6 +529,72 @@ write_if_missing "ai/iterations/ITER-0001.md" "# ITER-0001 Decision Log
 | Timestamp | Role | Decision | Why |
 |-----------|------|----------|-----|"
 
+write_if_missing "ai/templates/next-agent-template.yaml" 'next_role: <ROLE>
+prompt_file: ai/prompts/<prompt-file>.md
+read:
+  - ai/goal.yaml
+  - ai/judgment.yaml
+  - ai/constitution.yaml
+  - ai/backlog.yaml
+  - ai/active_item.yaml
+  - ai/decision-lock.yaml
+  - ai/active_agent.txt
+  - ai/next_agent.md
+allowed_edits:
+  - <list of files this role may edit>
+stop_conditions:
+  - WAITING FOR BATON when active agent mismatch
+  - WAITING FOR USER when clarification is required
+success_criteria:
+  - <what must be true for handoff>
+handoff_on_success:
+  print_exact: HANDOFF TO <NEXT_ROLE>'
+
+write_if_missing "ai/templates/backlog-item-template.yaml" 'id: ITEM-XXXX
+title: <short title>
+goal: <single-sentence outcome>
+type: feature   # migration | feature | bugfix | refactor | docs
+status: todo    # todo | in_progress | blocked | done
+priority: high  # high | medium | low
+dependencies: []
+notes: []'
+
+write_if_missing "ai/templates/active-item-template.yaml" 'id: null
+title: null
+goal: null
+status: idle
+owner_role: null
+related_files: []
+acceptance_criteria: []
+open_questions: []
+done_definition: []'
+
+write_if_missing "ai/templates/decision-lock-template.yaml" 'confirmed_by_user: false
+blocked_on_user: false
+last_user_decision: null
+open_questions: []
+approved_exceptions: []'
+
+write_if_missing "ai/templates/one-pager-requirements-template.md" '# Requirements (One Pager)
+
+## Objective
+<what outcome is needed>
+
+## In Scope
+- <scope item>
+
+## Out of Scope
+- <non-goal>
+
+## Constraints
+- <technical/business constraints>
+
+## Acceptance Criteria
+- <testable condition>
+
+## Open Questions
+- <only unresolved questions that require user clarification>'
+
 write_if_missing "ai/logs/baton.log" "# Baton run log
 # Timestamped entries from scripts/run-baton.sh are appended here."
 
