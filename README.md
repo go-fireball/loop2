@@ -68,6 +68,17 @@ If you already have the repo cloned:
    Follow ai/next_agent.yaml exactly.
    ```
 
+## Script reference
+
+The `scripts/` folder includes a few helper commands beyond the main runner:
+
+- `./scripts/bootstrap.sh [ROLE]` — seeds `ai/` from `ai/defaults/` (skip-if-exists) and creates dynamic baton files.
+- `./scripts/check-baton.sh` — validates required files, active role, and YAML structure.
+- `./scripts/generate-next-agent.sh <ROLE> [--notes ...] [--return-to ...]` — writes `ai/next_agent.yaml` and `ai/next_agent.md` for a handoff.
+- `./scripts/resume-baton.sh [--force] [ROLE]` — resumes from `HUMAN` after answering `ai/user-questions.yaml`.
+- `./scripts/check-goal.sh` — project-specific acceptance harness for the sample Task Tracker app under `apps/task-tracker/`.
+- `./scripts/validate_baton.py` — YAML schema helper used by `check-baton.sh`.
+
 ## Optional automation runner
 
 `./scripts/run-baton.sh` repeatedly invokes an AI executor with:
