@@ -51,6 +51,39 @@ chmod +x init.sh
 
 This clones the repo temporarily, copies `scripts/` and `ai/defaults/` into your project, and runs bootstrap to populate `ai/` with the seed files.
 
+### Required: customize `ai/goal.yaml` before running the loop
+
+After bootstrap, edit `ai/goal.yaml` and replace the placeholder values. Keep this file at **goal level** (what to build and what success looks like), not implementation design.
+
+Use all sections in the template:
+- `project_goal`: one clear outcome statement for the product or change.
+- `success_criteria`: concrete, testable must-haves (the acceptance bar).
+- `context_notes`: business context, user context, dependencies, and non-technical preferences that help the team make better tradeoffs.
+- `constraints`: guardrails that must be respected (keep the existing defaults unless you intentionally override them).
+
+High-quality goal file checklist:
+- be specific and measurable (avoid vague goals like "improve UX").
+- include hard requirements (security/compliance/performance/SLA expectations if relevant).
+- define scope boundaries (what is in vs out for this iteration).
+- avoid prescribing architecture, tech stacks, or low-level tasks unless they are hard constraints.
+
+Example (shape only):
+
+```yaml
+project_goal: Deliver a production-ready internal task tracker CLI for support engineers
+success_criteria:
+  - Users can add, list, complete, and delete tasks from the terminal
+  - Task data persists between runs in a local JSON file
+  - Core flows are covered by automated tests and pass in CI
+context_notes:
+  - Primary users are support engineers managing incident follow-ups
+  - Keep setup lightweight; no external database for v1
+constraints:
+  - No autonomous background runtime
+  - No heavy phase orchestration engine
+  - No unnecessary microservices or clever abstractions
+```
+
 ## Start the loop (existing checkout)
 
 If you already have the repo cloned:
@@ -59,11 +92,12 @@ If you already have the repo cloned:
    ```bash
    ./scripts/bootstrap.sh PRODUCT_OWNER
    ```
-2. Run checks:
+2. Update `ai/goal.yaml` with your real project goal, must-have success criteria, context notes, and any explicit constraints.
+3. Run checks:
    ```bash
    ./scripts/check-baton.sh
    ```
-3. In a fresh AI session, run the baton instruction:
+4. In a fresh AI session, run the baton instruction:
    ```
    Follow ai/next_agent.yaml exactly.
    ```
