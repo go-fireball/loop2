@@ -1,0 +1,32 @@
+next_role: ARCHITECT
+prompt_file: ai/prompts/02-architect.md
+read:
+  - ai/requirements.md
+  - ai/active_item.yaml
+  - ai/judgment.yaml
+  - ai/simplification.md
+  - ai/decision-lock.yaml
+  - ai/goal.yaml
+  - ai/constitution.yaml
+  - ai/active_agent.txt
+  - ai/next_agent.md
+  - ai/user-questions.yaml
+allowed_edits:
+  - context/repo/
+  - ai/review.md
+  - ai/decision-lock.yaml
+  - ai/user-questions.yaml
+  - ai/iterations/ITER-0001.md
+  - ai/active_agent.txt
+  - ai/next_agent.yaml
+  - ai/next_agent.md
+stop_conditions:
+  - WAITING FOR BATON when active agent mismatch
+  - WAITING FOR USER when clarification is required
+success_criteria:
+  - architecture defined with boundaries and tradeoffs
+handoff_on_success:
+  print_exact: HANDOFF TO PLANNER
+notes:
+  - Human answered questions
+  - resuming baton

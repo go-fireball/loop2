@@ -1,0 +1,11 @@
+items: []
+# Example format — PRODUCT_OWNER creates real items from ai/goal.yaml:
+#  - id: ITEM-0001
+#    title: Build user authentication
+#    goal: Allow users to sign in with email and password
+#    type: feature
+#    status: todo
+#    priority: high
+#    dependencies: []
+#    notes:
+#      - Python 3 only, no external dependencies

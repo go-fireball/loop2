@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 #
-# Usage: ./scripts/resume-baton.sh [ROLE]
+# Usage: ./scripts/resume-baton.sh [--force] [ROLE]
 #
 # Hands the baton back from HUMAN to the next AI role.
 # Reads return_to_role from ai/next_agent.yaml unless overridden by argument.
 # Call this after answering questions in ai/user-questions.yaml.
+#
+# Pass --force to skip the unanswered-question check.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+
+FORCE=0
 
 # Verify active agent is HUMAN
 current="$(tr -d '[:space:]' < ai/active_agent.txt 2>/dev/null || echo "")"
@@ -20,10 +24,13 @@ fi
 # Determine return role
 return_to=""
 
-# Check for CLI argument override
-if [[ $# -ge 1 ]]; then
-  return_to="$1"
-fi
+# Parse args
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --force) FORCE=1; shift ;;
+    *) return_to="$1"; shift ;;
+  esac
+done
 
 # Fall back to return_to_role from next_agent.yaml
 if [[ -z "$return_to" && -f ai/next_agent.yaml ]]; then
@@ -52,8 +59,17 @@ if [[ $found -eq 0 ]]; then
   exit 1
 fi
 
-# Update user-questions status to answered
+# Check for unanswered questions
 if [[ -f ai/user-questions.yaml ]]; then
+  unanswered=$(grep -cE 'answer: null$|answer: ""$' ai/user-questions.yaml || true)
+  if [[ "$unanswered" -gt 0 && $FORCE -eq 0 ]]; then
+    echo "Warning: $unanswered question(s) still have no answer in ai/user-questions.yaml."
+    echo ""
+    grep -B1 -E 'answer: null$|answer: ""$' ai/user-questions.yaml | grep -v '^--$' || true
+    echo ""
+    echo "To resume anyway:  $0 --force"
+    exit 1
+  fi
   sed -i 's/^status: waiting$/status: answered/' ai/user-questions.yaml
 fi
 
