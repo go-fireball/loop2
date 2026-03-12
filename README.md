@@ -1,10 +1,10 @@
 # loop
 
-A practical, governed, role-based AI software delivery loop inspired by `go-fireball/loop` v1.0 baton relay concepts, simplified for broad software delivery.
+A practical, governed, role-based AI software delivery loop for shipping software work through explicit baton handoffs.
 
 ## What this repository is
 
-This repo provides a **Codex-first baton workflow** for migration, bugfix, feature, refactor, and docs work. It is intentionally lightweight:
+This repo provides a **role-based baton workflow** for migration, bugfix, feature, refactor, and docs work. It is intentionally lightweight:
 - no phase-heavy orchestration framework
 - no background autonomous runtime
 - explicit handoffs via files
@@ -51,6 +51,39 @@ chmod +x init.sh
 
 This clones the repo temporarily, copies `scripts/` and `ai/defaults/` into your project, and runs bootstrap to populate `ai/` with the seed files.
 
+### Required: customize `ai/goal.yaml` before running the loop
+
+After bootstrap, edit `ai/goal.yaml` and replace the placeholder values. Keep this file at **goal level** (what to build and what success looks like), not implementation design.
+
+Use all sections in the template:
+- `project_goal`: one clear outcome statement for the product or change.
+- `success_criteria`: concrete, testable must-haves (the acceptance bar).
+- `context_notes`: business context, user context, dependencies, and non-technical preferences that help the team make better tradeoffs.
+- `constraints`: guardrails that must be respected (keep the existing defaults unless you intentionally override them).
+
+High-quality goal file checklist:
+- be specific and measurable (avoid vague goals like "improve UX").
+- include hard requirements (security/compliance/performance/SLA expectations if relevant).
+- define scope boundaries (what is in vs out for this iteration).
+- avoid prescribing architecture, tech stacks, or low-level tasks unless they are hard constraints.
+
+Example (shape only):
+
+```yaml
+project_goal: Deliver a production-ready internal task tracker CLI for support engineers
+success_criteria:
+  - Users can add, list, complete, and delete tasks from the terminal
+  - Task data persists between runs in a local JSON file
+  - Core flows are covered by automated tests and pass in CI
+context_notes:
+  - Primary users are support engineers managing incident follow-ups
+  - Keep setup lightweight; no external database for v1
+constraints:
+  - No autonomous background runtime
+  - No heavy phase orchestration engine
+  - No unnecessary microservices or clever abstractions
+```
+
 ## Start the loop (existing checkout)
 
 If you already have the repo cloned:
@@ -59,14 +92,26 @@ If you already have the repo cloned:
    ```bash
    ./scripts/bootstrap.sh PRODUCT_OWNER
    ```
-2. Run checks:
+2. Update `ai/goal.yaml` with your real project goal, must-have success criteria, context notes, and any explicit constraints.
+3. Run checks:
    ```bash
    ./scripts/check-baton.sh
    ```
-3. In a fresh Codex session, run the baton instruction:
+4. In a fresh AI session, run the baton instruction:
    ```
    Follow ai/next_agent.yaml exactly.
    ```
+
+## Script reference
+
+The `scripts/` folder includes a few helper commands beyond the main runner:
+
+- `./scripts/bootstrap.sh [ROLE]` — seeds `ai/` from `ai/defaults/` (skip-if-exists) and creates dynamic baton files.
+- `./scripts/check-baton.sh` — validates required files, active role, and YAML structure.
+- `./scripts/generate-next-agent.sh <ROLE> [--notes ...] [--return-to ...]` — writes `ai/next_agent.yaml` and `ai/next_agent.md` for a handoff.
+- `./scripts/resume-baton.sh [--force] [ROLE]` — resumes from `HUMAN` after answering `ai/user-questions.yaml`.
+- `./scripts/check-goal.sh` — project-specific acceptance harness for the sample Task Tracker app under `apps/task-tracker/`.
+- `./scripts/validate_baton.py` — YAML schema helper used by `check-baton.sh`.
 
 ## Optional automation runner
 
@@ -156,7 +201,7 @@ PLANNER owns selection/splitting; DEV/VALIDATOR/REVIEWER execute and verify.
 ## Fresh-session hygiene
 
 To reduce context bleed:
-- use a fresh Codex session per turn when possible
+- use a fresh AI session per turn when possible
 - always start with `Follow ai/next_agent.yaml exactly.`
 - rely on files under `ai/` as the process backbone
 
