@@ -121,7 +121,7 @@ check_cli() {
     copilot) cli="copilot" ;;
   esac
   if ! command -v "$cli" >/dev/null 2>&1; then
-    echo "$cli CLI not found; install it before using --executor $EXECUTOR." | tee -a ai/logs/baton.log
+    echo "$cli CLI not found; install it before using --executor $EXECUTOR."
     exit 1
   fi
 }
@@ -138,15 +138,15 @@ setup_iter_branch() {
 
   # Ensure we're in a git repo
   if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo "Warning: not a git repo; disabling branch-per-iteration." | tee -a ai/logs/baton.log
+    echo "Warning: not a git repo; disabling branch-per-iteration."
     GIT_ENABLED=0
     return
   fi
 
   # Fail if working tree is dirty — don't mix user changes with iteration commits
   if ! git diff --quiet || ! git diff --cached --quiet; then
-    echo "Warning: uncommitted changes detected; disabling branch-per-iteration." | tee -a ai/logs/baton.log
-    echo "Commit or stash your changes first to enable git tracking." | tee -a ai/logs/baton.log
+    echo "Warning: uncommitted changes detected; disabling branch-per-iteration."
+    echo "Commit or stash your changes first to enable git tracking."
     GIT_ENABLED=0
     return
   fi
@@ -172,7 +172,7 @@ setup_iter_branch() {
   fi
 
   git checkout -b "$ITER_BRANCH"
-  echo "Created iteration branch: $ITER_BRANCH (from $SOURCE_BRANCH)" | tee -a ai/logs/baton.log
+  echo "Created iteration branch: $ITER_BRANCH (from $SOURCE_BRANCH)"
 }
 
 # Commit all changes after a baton step
@@ -186,7 +186,6 @@ commit_step() {
 
   # Only commit if there are changes
   if git diff --quiet && git diff --cached --quiet && [[ -z "$(git ls-files --others --exclude-standard)" ]]; then
-    echo "[$step_num] No changes to commit." | tee -a ai/logs/baton.log
     return
   fi
 
@@ -198,13 +197,28 @@ Executor: $EXECUTOR | Model: $MODEL
 Branch: $ITER_BRANCH
 EOF
   )"
-  echo "[$step_num] Committed changes for role: $role" | tee -a ai/logs/baton.log
 }
 
 # ── Initial baton validation ──
 if ! ./scripts/check-baton.sh; then
-  echo "Baton state is invalid; cannot start." | tee -a ai/logs/baton.log
+  echo "Baton state is invalid; cannot start."
   exit 1
+fi
+
+# ── Refuse to start when active agent is HUMAN ──
+current_agent="$(tr -d '[:space:]' < ai/active_agent.txt 2>/dev/null || echo "")"
+if [[ "$current_agent" == "HUMAN" ]]; then
+  echo ""
+  echo "Baton is held by HUMAN — waiting for your input."
+  echo ""
+  echo "  1. Answer questions in:  ai/user-questions.yaml"
+  echo "  2. Then run:             ./scripts/resume-baton.sh"
+  echo ""
+  if [[ -f ai/user-questions.yaml ]]; then
+    echo "Current questions:"
+    cat ai/user-questions.yaml
+  fi
+  exit 0
 fi
 
 # ── Set up iteration branch after validation passes ──
@@ -212,11 +226,13 @@ setup_iter_branch
 
 for ((step=1; step<=MAX_STEPS; step++)); do
   ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-  echo "[$ts] Step $step [$EXECUTOR model=$MODEL]" | tee -a ai/logs/baton.log
+  current_role="$(tr -d '[:space:]' < ai/active_agent.txt 2>/dev/null || echo "UNKNOWN")"
+
+  echo "[$ts] STEP $step START role=$current_role executor=$EXECUTOR model=$MODEL" | tee -a ai/logs/baton.log
 
   # ── Pre-step validation ──
   if ! ./scripts/check-baton.sh >/dev/null 2>&1; then
-    echo "[$ts] Baton state invalid before step $step; stopping." | tee -a ai/logs/baton.log
+    echo "[$ts] STEP $step END role=$current_role result=INVALID_STATE" | tee -a ai/logs/baton.log
     exit 1
   fi
 
@@ -224,7 +240,7 @@ for ((step=1; step<=MAX_STEPS; step++)); do
   mapfile -t cmd < <(build_exec_cmd)
 
   if [[ $DRY_RUN -eq 1 ]]; then
-    echo "DRY RUN: would invoke: ${cmd[*]}" | tee -a ai/logs/baton.log
+    echo "DRY RUN: would invoke: ${cmd[*]}"
     exit 0
   fi
 
@@ -236,44 +252,46 @@ for ((step=1; step<=MAX_STEPS; step++)); do
   rc=$?
   set -e
 
-  cat "$step_log" >> ai/logs/baton.log
+  # Save full output to per-step log file (for debugging)
+  step_log_file="ai/logs/step-$(printf '%03d' "$step")-${current_role}.log"
+  cp "$step_log" "$step_log_file"
 
-  # Read the current role for commit messages
-  current_role="$(cat ai/active_agent.txt 2>/dev/null || echo "UNKNOWN")"
+  end_ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
   if [[ $rc -ne 0 ]]; then
-    echo "$EXECUTOR command failed (exit $rc); stopping." | tee -a ai/logs/baton.log
+    echo "[$end_ts] STEP $step END role=$current_role result=FAILED exit_code=$rc" | tee -a ai/logs/baton.log
     commit_step "$step" "$current_role (failed)"
     rm -f "$step_log"
     exit 1
   fi
 
   if grep -q "WAITING FOR USER" "$step_log"; then
-    echo "Stopped: WAITING FOR USER" | tee -a ai/logs/baton.log
+    echo "[$end_ts] STEP $step END role=$current_role result=WAITING_FOR_USER" | tee -a ai/logs/baton.log
     commit_step "$step" "$current_role (waiting for user)"
     rm -f "$step_log"
     exit 0
   fi
 
   if grep -q "WAITING FOR BATON" "$step_log"; then
-    echo "Stopped: WAITING FOR BATON" | tee -a ai/logs/baton.log
+    echo "[$end_ts] STEP $step END role=$current_role result=WAITING_FOR_BATON" | tee -a ai/logs/baton.log
     commit_step "$step" "$current_role (waiting for baton)"
     rm -f "$step_log"
     exit 0
   fi
 
   if grep -q "HANDOFF TO " "$step_log"; then
+    echo "[$end_ts] STEP $step END role=$current_role result=HANDOFF" | tee -a ai/logs/baton.log
     commit_step "$step" "$current_role"
     rm -f "$step_log"
-    [[ $FULL_AUTO -eq 1 ]] || { echo "Stopped due to --no-full-auto after one handoff." | tee -a ai/logs/baton.log; exit 0; }
+    [[ $FULL_AUTO -eq 1 ]] || { echo "Stopped due to --no-full-auto after one handoff."; exit 0; }
     continue
   fi
 
-  echo "Unexpected output; stopping safely." | tee -a ai/logs/baton.log
+  echo "[$end_ts] STEP $step END role=$current_role result=UNEXPECTED" | tee -a ai/logs/baton.log
   commit_step "$step" "$current_role (unexpected)"
   rm -f "$step_log"
   exit 1
 done
 
-echo "Reached max steps (${MAX_STEPS}); stopping safely." | tee -a ai/logs/baton.log
+echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] REACHED_MAX_STEPS ($MAX_STEPS)" | tee -a ai/logs/baton.log
 commit_step "final" "max-steps-reached"

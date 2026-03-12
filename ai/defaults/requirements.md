@@ -20,7 +20,3 @@
 ## Acceptance Criteria
 
 - <testable condition from goal success_criteria>
-
-## Open Questions
-
-- <only unresolved questions that require user clarification>

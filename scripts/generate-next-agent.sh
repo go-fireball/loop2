@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 #
-# Usage: ./scripts/generate-next-agent.sh <ROLE> [--notes "context for next role"]
+# Usage: ./scripts/generate-next-agent.sh <ROLE> [--notes "context"] [--return-to "ROLE"]
 #
 # Generates ai/next_agent.yaml with the correct config for the given role.
 # Pass --notes to include handoff context (what was done, what to watch for).
+# Pass --return-to to specify which role the baton returns to (used with HUMAN).
 # Called by each role prompt at handoff time so agents don't hand-write YAML.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -12,14 +13,16 @@ cd "$ROOT"
 
 ROLE=""
 NOTES=""
+RETURN_TO=""
 
 # Parse args
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --notes) NOTES="$2"; shift 2 ;;
+    --return-to) RETURN_TO="$2"; shift 2 ;;
     --help|-h)
-      echo "Usage: $0 <ROLE> [--notes \"context for next role\"]" >&2
-      echo "Roles: PRODUCT_OWNER SENIOR_JUDGMENTAL_ENGINEER ARCHITECT PLANNER DEV VALIDATOR REVIEWER" >&2
+      echo "Usage: $0 <ROLE> [--notes \"context for next role\"] [--return-to \"ROLE\"]" >&2
+      echo "Roles: PRODUCT_OWNER SENIOR_JUDGMENTAL_ENGINEER ARCHITECT PLANNER DEV VALIDATOR REVIEWER HUMAN" >&2
       exit 0
       ;;
     *)
@@ -33,8 +36,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$ROLE" ]]; then
-  echo "Usage: $0 <ROLE> [--notes \"context for next role\"]" >&2
-  echo "Roles: PRODUCT_OWNER SENIOR_JUDGMENTAL_ENGINEER ARCHITECT PLANNER DEV VALIDATOR REVIEWER" >&2
+  echo "Usage: $0 <ROLE> [--notes \"context for next role\"] [--return-to \"ROLE\"]" >&2
+  echo "Roles: PRODUCT_OWNER SENIOR_JUDGMENTAL_ENGINEER ARCHITECT PLANNER DEV VALIDATOR REVIEWER HUMAN" >&2
   exit 1
 fi
 
@@ -55,6 +58,7 @@ case "$ROLE" in
     ALLOWED_EDITS=(
       "ai/requirements.md"
       "ai/decision-lock.yaml"
+      "ai/user-questions.yaml"
       "ai/iterations/ITER-0001.md"
       "ai/active_agent.txt"
       "ai/next_agent.yaml"
@@ -71,10 +75,13 @@ case "$ROLE" in
       "ai/judgment.yaml"
       "ai/active_item.yaml"
       "ai/constitution.yaml"
+      "ai/decision-lock.yaml"
     )
     ALLOWED_EDITS=(
       "ai/simplification.md"
       "ai/review.md"
+      "ai/decision-lock.yaml"
+      "ai/user-questions.yaml"
       "ai/iterations/ITER-0001.md"
       "ai/active_agent.txt"
       "ai/next_agent.yaml"
@@ -95,6 +102,8 @@ case "$ROLE" in
     ALLOWED_EDITS=(
       "context/repo/"
       "ai/review.md"
+      "ai/decision-lock.yaml"
+      "ai/user-questions.yaml"
       "ai/iterations/ITER-0001.md"
       "ai/active_agent.txt"
       "ai/next_agent.yaml"
@@ -115,6 +124,8 @@ case "$ROLE" in
     ALLOWED_EDITS=(
       "ai/backlog.yaml"
       "ai/active_item.yaml"
+      "ai/decision-lock.yaml"
+      "ai/user-questions.yaml"
       "ai/iterations/ITER-0001.md"
       "ai/active_agent.txt"
       "ai/next_agent.yaml"
@@ -130,11 +141,14 @@ case "$ROLE" in
       "ai/requirements.md"
       "ai/judgment.yaml"
       "ai/simplification.md"
+      "ai/decision-lock.yaml"
     )
     ALLOWED_EDITS=(
       "apps/"
       "infra/"
       "ai/review.md"
+      "ai/decision-lock.yaml"
+      "ai/user-questions.yaml"
       "ai/iterations/ITER-0001.md"
       "ai/active_agent.txt"
       "ai/next_agent.yaml"
@@ -148,9 +162,12 @@ case "$ROLE" in
     READ_FILES=(
       "ai/active_item.yaml"
       "ai/review.md"
+      "ai/decision-lock.yaml"
     )
     ALLOWED_EDITS=(
       "ai/review.md"
+      "ai/decision-lock.yaml"
+      "ai/user-questions.yaml"
       "ai/iterations/ITER-0001.md"
       "ai/active_agent.txt"
       "ai/next_agent.yaml"
@@ -173,6 +190,7 @@ case "$ROLE" in
       "ai/backlog.yaml"
       "ai/active_item.yaml"
       "ai/decision-lock.yaml"
+      "ai/user-questions.yaml"
       "ai/iterations/ITER-0001.md"
       "ai/active_agent.txt"
       "ai/next_agent.yaml"
@@ -181,9 +199,29 @@ case "$ROLE" in
     SUCCESS="review decision made (DONE/REVISE/ESCALATE)"
     NEXT_ROLE="PLANNER"
     ;;
+  HUMAN)
+    PROMPT_FILE="N/A"
+    READ_FILES=(
+      "ai/user-questions.yaml"
+      "ai/active_item.yaml"
+      "ai/decision-lock.yaml"
+    )
+    ALLOWED_EDITS=(
+      "ai/user-questions.yaml"
+      "ai/active_agent.txt"
+      "ai/next_agent.yaml"
+      "ai/next_agent.md"
+    )
+    SUCCESS="human answered questions and resumed baton"
+    # Default next role; overridden by --return-to
+    NEXT_ROLE="PRODUCT_OWNER"
+    if [[ -n "$RETURN_TO" ]]; then
+      NEXT_ROLE="$RETURN_TO"
+    fi
+    ;;
   *)
     echo "Error: unknown role '$ROLE'" >&2
-    echo "Valid roles: PRODUCT_OWNER SENIOR_JUDGMENTAL_ENGINEER ARCHITECT PLANNER DEV VALIDATOR REVIEWER" >&2
+    echo "Valid roles: PRODUCT_OWNER SENIOR_JUDGMENTAL_ENGINEER ARCHITECT PLANNER DEV VALIDATOR REVIEWER HUMAN" >&2
     exit 1
     ;;
 esac
@@ -194,6 +232,7 @@ COMMON_READS=(
   "ai/constitution.yaml"
   "ai/active_agent.txt"
   "ai/next_agent.md"
+  "ai/user-questions.yaml"
 )
 
 # Merge common reads (deduplicate)
@@ -230,6 +269,10 @@ done
   echo "  - $SUCCESS"
   echo "handoff_on_success:"
   echo "  print_exact: HANDOFF TO $NEXT_ROLE"
+  # Include return_to_role for HUMAN handoffs
+  if [[ "$ROLE" == "HUMAN" ]]; then
+    echo "return_to_role: $NEXT_ROLE"
+  fi
   # Append handoff notes if provided
   if [[ -n "$NOTES" ]]; then
     echo "notes:"

@@ -24,6 +24,7 @@ prompt_file_for_role() {
     DEV)                         echo "ai/prompts/04-dev.md" ;;
     VALIDATOR)                   echo "ai/prompts/05-validator.md" ;;
     REVIEWER)                    echo "ai/prompts/06-reviewer.md" ;;
+    HUMAN)                       echo "N/A" ;;
     *) echo "ERROR: unknown role: $1" >&2; exit 1 ;;
   esac
 }
@@ -83,10 +84,12 @@ read:
   - ai/backlog.yaml
   - ai/active_item.yaml
   - ai/decision-lock.yaml
+  - ai/user-questions.yaml
   - ai/active_agent.txt
 allowed_edits:
   - ai/requirements.md
   - ai/decision-lock.yaml
+  - ai/user-questions.yaml
   - ai/iterations/ITER-0001.md
   - ai/active_agent.txt
   - ai/next_agent.yaml
