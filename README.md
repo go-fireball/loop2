@@ -41,9 +41,10 @@ Run this in an empty project directory:
 
 ```bash
 curl -sO https://raw.githubusercontent.com/go-fireball/loop/main/init.sh
-bash init.sh                # defaults to PRODUCT_OWNER
+chmod +x init.sh
+./init.sh                   # defaults to PRODUCT_OWNER
 # or
-bash init.sh ARCHITECT      # start from a different role
+./init.sh ARCHITECT         # start from a different role
 ```
 
 This clones the repo temporarily, copies `scripts/` and `ai/defaults/` into your project, and runs bootstrap to populate `ai/` with the seed files.

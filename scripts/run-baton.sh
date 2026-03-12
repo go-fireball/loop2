@@ -100,6 +100,7 @@ build_exec_cmd() {
       echo "claude"
       echo "--model"
       echo "$MODEL"
+      echo "--dangerously-skip-permissions"
       echo "-p"
       echo "$PROMPT"
       ;;
