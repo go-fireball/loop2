@@ -1,8 +1,0 @@
-status: answered
-return_to_role: ARCHITECT
-questions:
-  - id: Q-001
-    asked_by: ARCHITECT
-    question: "REST or gRPC?"
-    answer: "Use gRPC"
-    answered: false

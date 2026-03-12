@@ -1,8 +1,0 @@
-id: ITEM-XXXX
-title: <short title>
-goal: <single-sentence outcome>
-type: feature   # migration | feature | bugfix | refactor | docs
-status: todo    # todo | in_progress | blocked | done
-priority: high  # high | medium | low
-dependencies: []
-notes: []
