@@ -265,29 +265,37 @@ for ((step=1; step<=MAX_STEPS; step++)); do
     exit 1
   fi
 
-  if grep -q "WAITING FOR USER" "$step_log"; then
+  # Detect baton state from ai/active_agent.txt (the authoritative source).
+  # Do NOT grep log output for signal strings — logs contain file contents
+  # (e.g. constitution.yaml, prompt files) that include those strings verbatim,
+  # causing false positives.
+  new_agent="$(tr -d '[:space:]' < ai/active_agent.txt 2>/dev/null || echo "")"
+
+  if [[ "$new_agent" == "HUMAN" ]]; then
     echo "[$end_ts] STEP $step END role=$current_role result=WAITING_FOR_USER" | tee -a ai/logs/baton.log
     commit_step "$step" "$current_role (waiting for user)"
     rm -f "$step_log"
+    echo ""
+    echo "Agent requested human input."
+    if [[ -f ai/user-questions.yaml ]]; then
+      echo "Questions in: ai/user-questions.yaml"
+      echo ""
+      cat ai/user-questions.yaml
+    fi
+    echo ""
+    echo "After answering, run: ./scripts/resume-baton.sh"
     exit 0
   fi
 
-  if grep -q "WAITING FOR BATON" "$step_log"; then
-    echo "[$end_ts] STEP $step END role=$current_role result=WAITING_FOR_BATON" | tee -a ai/logs/baton.log
-    commit_step "$step" "$current_role (waiting for baton)"
-    rm -f "$step_log"
-    exit 0
-  fi
-
-  if grep -q "HANDOFF TO " "$step_log"; then
-    echo "[$end_ts] STEP $step END role=$current_role result=HANDOFF" | tee -a ai/logs/baton.log
+  if [[ "$new_agent" != "$current_role" && -n "$new_agent" ]]; then
+    echo "[$end_ts] STEP $step END role=$current_role result=HANDOFF to=$new_agent" | tee -a ai/logs/baton.log
     commit_step "$step" "$current_role"
     rm -f "$step_log"
     [[ $FULL_AUTO -eq 1 ]] || { echo "Stopped due to --no-full-auto after one handoff."; exit 0; }
     continue
   fi
 
-  echo "[$end_ts] STEP $step END role=$current_role result=UNEXPECTED" | tee -a ai/logs/baton.log
+  echo "[$end_ts] STEP $step END role=$current_role result=UNEXPECTED (active_agent unchanged: $new_agent)" | tee -a ai/logs/baton.log
   commit_step "$step" "$current_role (unexpected)"
   rm -f "$step_log"
   exit 1
