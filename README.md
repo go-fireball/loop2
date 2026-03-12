@@ -1,10 +1,10 @@
 # loop
 
-A practical, governed, role-based AI software delivery loop inspired by `go-fireball/loop` v1.0 baton relay concepts, simplified for broad software delivery.
+A practical, governed, role-based AI software delivery loop for shipping software work through explicit baton handoffs.
 
 ## What this repository is
 
-This repo provides a **Codex-first baton workflow** for migration, bugfix, feature, refactor, and docs work. It is intentionally lightweight:
+This repo provides a **role-based baton workflow** for migration, bugfix, feature, refactor, and docs work. It is intentionally lightweight:
 - no phase-heavy orchestration framework
 - no background autonomous runtime
 - explicit handoffs via files
@@ -42,7 +42,7 @@ After REVIEWER:
 Run this in an empty project directory:
 
 ```bash
-curl -sO https://raw.githubusercontent.com/go-fireball/loop/main/init.sh
+curl -sO https://raw.githubusercontent.com/<your-org>/loop/main/init.sh
 chmod +x init.sh
 ./init.sh                   # defaults to PRODUCT_OWNER
 # or
@@ -63,7 +63,7 @@ If you already have the repo cloned:
    ```bash
    ./scripts/check-baton.sh
    ```
-3. In a fresh Codex session, run the baton instruction:
+3. In a fresh AI session, run the baton instruction:
    ```
    Follow ai/next_agent.yaml exactly.
    ```
@@ -167,7 +167,7 @@ PLANNER owns selection/splitting; DEV/VALIDATOR/REVIEWER execute and verify.
 ## Fresh-session hygiene
 
 To reduce context bleed:
-- use a fresh Codex session per turn when possible
+- use a fresh AI session per turn when possible
 - always start with `Follow ai/next_agent.yaml exactly.`
 - rely on files under `ai/` as the process backbone
 
