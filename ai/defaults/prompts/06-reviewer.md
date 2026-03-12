@@ -28,6 +28,7 @@
 - `ai/iterations/ITER-0001.md`
 
 ## 4) Required actions
+- If `ai/user-questions.yaml` has `status: answered`, copy decisions to `ai/decision-lock.yaml` under `approved_decisions` and reset `ai/user-questions.yaml` to `status: none`.
 - Decide one of: DONE, REVISE, ESCALATE.
 - DONE: mark item done and hand to PLANNER for next item.
 - REVISE: route baton to role that must fix concrete gaps.

@@ -12,6 +12,7 @@
 - `ai/simplification.md`
 - `ai/judgment.yaml`
 - `ai/active_item.yaml`
+- `ai/decision-lock.yaml`
 - `ai/user-questions.yaml`
 - `ai/constitution.yaml`
 - `ai/next_agent.md`
@@ -19,6 +20,7 @@
 ## 3) Allowed edits (only)
 - `ai/simplification.md`
 - `ai/review.md` (only if adding judgment warnings)
+- `ai/decision-lock.yaml`
 - `ai/user-questions.yaml`
 - `ai/next_agent.yaml`
 - `ai/next_agent.md` (optional)
@@ -26,6 +28,7 @@
 - `ai/iterations/ITER-0001.md`
 
 ## 4) Required actions
+- If `ai/user-questions.yaml` has `status: answered`, copy decisions to `ai/decision-lock.yaml` under `approved_decisions` and reset `ai/user-questions.yaml` to `status: none`.
 - Apply practical engineering judgment to constrain overdesign.
 - Add explicit guardrails, tradeoff notes, and simplification instructions.
 - Ensure judgments in `ai/judgment.yaml` are reflected.

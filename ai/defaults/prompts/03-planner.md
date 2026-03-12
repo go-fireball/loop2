@@ -19,6 +19,7 @@
 ## 3) Allowed edits (only)
 - `ai/backlog.yaml`
 - `ai/active_item.yaml`
+- `ai/decision-lock.yaml`
 - `ai/user-questions.yaml`
 - `ai/next_agent.yaml`
 - `ai/next_agent.md` (optional)
@@ -26,6 +27,7 @@
 - `ai/iterations/ITER-0001.md`
 
 ## 4) Required actions
+- If `ai/user-questions.yaml` has `status: answered`, copy decisions to `ai/decision-lock.yaml` under `approved_decisions` and reset `ai/user-questions.yaml` to `status: none`.
 - Select/refine next item and keep backlog statuses accurate.
 - Split oversized items into smaller deliverables.
 - Set `owner_role` on active item for execution baton.

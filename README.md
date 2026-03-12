@@ -30,10 +30,12 @@ Default order:
 6. VALIDATOR
 7. REVIEWER
 
+HUMAN is a first-class role in the baton system. Any role that needs human input hands the baton to HUMAN (sets `ai/active_agent.txt` to `HUMAN`), which blocks the runner until the human answers and resumes.
+
 After REVIEWER:
 - Done -> PLANNER (next item)
 - Revise -> role that must fix gaps
-- Escalate -> stop for human (`WAITING FOR USER`)
+- Escalate -> HUMAN (baton held until human answers and runs `resume-baton.sh`)
 
 ## Quick start (new project)
 
@@ -118,17 +120,29 @@ Disable with `--no-git` if you prefer manual version control.
 
 ### Safe stop conditions
 
-- `WAITING FOR USER`
-- `WAITING FOR BATON`
+- `WAITING FOR USER` — an agent needs human input. The baton is handed to `HUMAN`, and the runner refuses to restart until the human answers questions in `ai/user-questions.yaml` and runs `./scripts/resume-baton.sh` to hand the baton back.
+- `WAITING FOR BATON` — role mismatch (the agent expected a different active role)
 - unexpected output
 - command failure
 - max step count reached
+
+### Human-in-the-loop workflow
+
+When any role hits a blocker that requires human judgment:
+
+1. The agent writes questions to `ai/user-questions.yaml` (the single source of truth for pending questions).
+2. The agent sets `ai/active_agent.txt` to `HUMAN` and outputs `WAITING FOR USER`.
+3. The runner exits cleanly. Re-running `run-baton.sh` will **not** proceed — it displays the pending questions and tells the operator to answer them.
+4. The human edits `ai/user-questions.yaml` to fill in answers.
+5. The human runs `./scripts/resume-baton.sh` to hand the baton back to the appropriate AI role.
+6. The resumed agent copies the answered decisions into `ai/decision-lock.yaml` under `approved_decisions` for the audit trail.
 
 ## Judgments and governance
 
 - Technical defaults and constraints live in `ai/judgment.yaml`.
 - Core governance rules live in `ai/constitution.yaml`.
-- Decision exceptions and user confirmations live in `ai/decision-lock.yaml`.
+- Decision exceptions, user confirmations, and approved decisions live in `ai/decision-lock.yaml`.
+- Pending questions for the human operator live in `ai/user-questions.yaml`.
 
 These files constrain architecture and implementation to reduce overdesign and maintain consistent delivery quality.
 
@@ -159,7 +173,7 @@ ai/defaults/          # Seed files — the single source of truth for bootstrap
   iterations/         # Initial iteration log
   logs/               # Initial baton log
   *.yaml / *.md       # State file defaults (goal, judgment, constitution, etc.)
-scripts/              # Bootstrap, baton runner, checks, and helpers
+scripts/              # Bootstrap, baton runner, resume, checks, and helpers
 init.sh               # One-liner setup for new projects
 ```
 

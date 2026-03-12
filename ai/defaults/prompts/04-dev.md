@@ -12,6 +12,7 @@
 - `ai/requirements.md`
 - `ai/judgment.yaml`
 - `ai/simplification.md`
+- `ai/decision-lock.yaml`
 - `ai/user-questions.yaml`
 - `ai/constitution.yaml`
 - `ai/next_agent.md`
@@ -22,6 +23,7 @@
 - `infra/**`
 - related tests/docs for active item
 - `ai/review.md` (implementation notes)
+- `ai/decision-lock.yaml`
 - `ai/user-questions.yaml`
 - `ai/next_agent.yaml`
 - `ai/next_agent.md` (optional)
@@ -29,6 +31,7 @@
 - `ai/iterations/ITER-0001.md`
 
 ## 4) Required actions
+- If `ai/user-questions.yaml` has `status: answered`, copy decisions to `ai/decision-lock.yaml` under `approved_decisions` and reset `ai/user-questions.yaml` to `status: none`.
 - Implement only active item scope.
 - Preserve behavior unless requirements explicitly allow change.
 - Add/update tests proportionally.

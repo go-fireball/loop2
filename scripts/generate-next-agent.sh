@@ -75,10 +75,12 @@ case "$ROLE" in
       "ai/judgment.yaml"
       "ai/active_item.yaml"
       "ai/constitution.yaml"
+      "ai/decision-lock.yaml"
     )
     ALLOWED_EDITS=(
       "ai/simplification.md"
       "ai/review.md"
+      "ai/decision-lock.yaml"
       "ai/user-questions.yaml"
       "ai/iterations/ITER-0001.md"
       "ai/active_agent.txt"
@@ -100,6 +102,7 @@ case "$ROLE" in
     ALLOWED_EDITS=(
       "context/repo/"
       "ai/review.md"
+      "ai/decision-lock.yaml"
       "ai/user-questions.yaml"
       "ai/iterations/ITER-0001.md"
       "ai/active_agent.txt"
@@ -121,6 +124,7 @@ case "$ROLE" in
     ALLOWED_EDITS=(
       "ai/backlog.yaml"
       "ai/active_item.yaml"
+      "ai/decision-lock.yaml"
       "ai/user-questions.yaml"
       "ai/iterations/ITER-0001.md"
       "ai/active_agent.txt"
@@ -137,11 +141,13 @@ case "$ROLE" in
       "ai/requirements.md"
       "ai/judgment.yaml"
       "ai/simplification.md"
+      "ai/decision-lock.yaml"
     )
     ALLOWED_EDITS=(
       "apps/"
       "infra/"
       "ai/review.md"
+      "ai/decision-lock.yaml"
       "ai/user-questions.yaml"
       "ai/iterations/ITER-0001.md"
       "ai/active_agent.txt"
@@ -156,9 +162,11 @@ case "$ROLE" in
     READ_FILES=(
       "ai/active_item.yaml"
       "ai/review.md"
+      "ai/decision-lock.yaml"
     )
     ALLOWED_EDITS=(
       "ai/review.md"
+      "ai/decision-lock.yaml"
       "ai/user-questions.yaml"
       "ai/iterations/ITER-0001.md"
       "ai/active_agent.txt"
