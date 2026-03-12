@@ -11,6 +11,7 @@ REQUIRED_KEYS = {
     "ai/backlog.yaml": ["items"],
     "ai/active_item.yaml": ["id", "status"],
     "ai/decision-lock.yaml": ["confirmed_by_user", "blocked_on_user"],
+    "ai/user-questions.yaml": ["status", "questions"],
     "ai/next_agent.yaml": ["next_role", "prompt_file"],
 }
 

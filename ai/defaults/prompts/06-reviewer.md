@@ -12,6 +12,7 @@
 - `ai/backlog.yaml`
 - `ai/review.md`
 - `ai/decision-lock.yaml`
+- `ai/user-questions.yaml`
 - `ai/constitution.yaml`
 - `ai/next_agent.md`
 
@@ -20,6 +21,7 @@
 - `ai/backlog.yaml`
 - `ai/active_item.yaml`
 - `ai/decision-lock.yaml`
+- `ai/user-questions.yaml`
 - `ai/next_agent.yaml`
 - `ai/next_agent.md` (optional)
 - `ai/active_agent.txt`
@@ -29,7 +31,13 @@
 - Decide one of: DONE, REVISE, ESCALATE.
 - DONE: mark item done and hand to PLANNER for next item.
 - REVISE: route baton to role that must fix concrete gaps.
-- ESCALATE: only for allowed human decision categories, then output exactly `WAITING FOR USER`.
+- ESCALATE: only for allowed human decision categories:
+  1. Write questions to `ai/user-questions.yaml` with `status: waiting` and `return_to_role: REVIEWER`.
+  2. Generate next_agent.yaml for HUMAN:
+     `./scripts/generate-next-agent.sh HUMAN --return-to REVIEWER --notes "escalation requiring human decision"`
+  3. Write `ai/next_agent.md` explaining the escalation.
+  4. Set `ai/active_agent.txt` to `HUMAN`.
+  5. Output exactly `WAITING FOR USER` and stop.
 
 ## 5) End-of-turn required steps
 - Append iteration decision line.

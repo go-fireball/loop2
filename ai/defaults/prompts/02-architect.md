@@ -13,12 +13,14 @@
 - `ai/judgment.yaml`
 - `ai/simplification.md`
 - `ai/decision-lock.yaml`
+- `ai/user-questions.yaml`
 - `ai/constitution.yaml`
 - `ai/next_agent.md`
 
 ## 3) Allowed edits (only)
 - `context/repo/` design notes
 - `ai/review.md` (architecture decisions only)
+- `ai/user-questions.yaml`
 - `ai/next_agent.yaml`
 - `ai/next_agent.md` (optional)
 - `ai/active_agent.txt`
@@ -27,7 +29,14 @@
 ## 4) Required actions
 - Define approach, boundaries, key files, and tradeoffs for current item.
 - Keep design proportional; avoid framework-heavy patterns.
-- If architecture exception is required, update decision lock and output exactly `WAITING FOR USER`.
+- If architecture exception is required:
+  1. Write questions to `ai/user-questions.yaml` with `status: waiting` and `return_to_role: ARCHITECT`.
+  2. Update `ai/decision-lock.yaml` with the exception request.
+  3. Generate next_agent.yaml for HUMAN:
+     `./scripts/generate-next-agent.sh HUMAN --return-to ARCHITECT --notes "architecture exception required"`
+  4. Write `ai/next_agent.md` explaining the exception.
+  5. Set `ai/active_agent.txt` to `HUMAN`.
+  6. Output exactly `WAITING FOR USER` and stop.
 
 ## 5) End-of-turn required steps
 - Append iteration decision line.

@@ -14,6 +14,3 @@
 
 ## Acceptance Criteria
 - <testable condition>
-
-## Open Questions
-- <only unresolved questions that require user clarification>

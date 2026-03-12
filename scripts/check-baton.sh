@@ -16,6 +16,7 @@ required_files=(
   "ai/backlog.yaml"
   "ai/active_item.yaml"
   "ai/decision-lock.yaml"
+  "ai/user-questions.yaml"
   "ai/requirements.md"
   "ai/iterations/ITER-0001.md"
 )
@@ -39,7 +40,7 @@ if [[ ! -s ai/active_agent.txt ]]; then
   errors=$((errors + 1))
 else
   agent="$(tr -d '[:space:]' < ai/active_agent.txt)"
-  valid_roles="PRODUCT_OWNER SENIOR_JUDGMENTAL_ENGINEER ARCHITECT PLANNER DEV VALIDATOR REVIEWER"
+  valid_roles="PRODUCT_OWNER SENIOR_JUDGMENTAL_ENGINEER ARCHITECT PLANNER DEV VALIDATOR REVIEWER HUMAN"
   found=0
   for role in $valid_roles; do
     if [[ "$agent" == "$role" ]]; then
@@ -67,6 +68,7 @@ yaml_files=(
   "ai/backlog.yaml"
   "ai/active_item.yaml"
   "ai/decision-lock.yaml"
+  "ai/user-questions.yaml"
   "ai/next_agent.yaml"
 )
 
