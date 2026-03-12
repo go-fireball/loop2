@@ -42,7 +42,7 @@ After REVIEWER:
 Run this in an empty project directory:
 
 ```bash
-curl -sO https://raw.githubusercontent.com/<your-org>/loop/main/init.sh
+curl -sO https://raw.githubusercontent.com/go-fireball/loop/main/init.sh
 chmod +x init.sh
 ./init.sh                   # defaults to PRODUCT_OWNER
 # or
