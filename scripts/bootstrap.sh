@@ -49,7 +49,13 @@ done
 
 # ── Copy defaults: mirror ai/defaults/ into ai/, skip existing files ──
 echo "Copying defaults from $DEFAULTS_DIR ..."
-while IFS= read -r src; do
+shopt -s globstar nullglob
+default_files=("$DEFAULTS_DIR"/**/*)
+IFS=$'\n' default_files=($(printf '%s\n' "${default_files[@]}" | sort))
+unset IFS
+for src in "${default_files[@]}"; do
+  [[ -f "$src" ]] || continue
+
   # Strip the "ai/defaults/" prefix to get the relative path
   rel="${src#${DEFAULTS_DIR}/}"
   dest="ai/${rel}"
@@ -63,7 +69,7 @@ while IFS= read -r src; do
   else
     echo "  exists  $dest (kept)"
   fi
-done < <(find "$DEFAULTS_DIR" -type f | sort)
+done
 
 # ── Generate dynamic state files (depend on starting role) ──
 if [[ ! -f "ai/active_agent.txt" ]]; then
