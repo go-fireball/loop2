@@ -48,8 +48,11 @@ for d in "${dirs[@]}"; do
 done
 
 # ── Copy defaults: mirror ai/defaults/ into ai/, skip existing files ──
+# Uses pure bash globbing (no external find/sort) for cross-platform compatibility.
 echo "Copying defaults from $DEFAULTS_DIR ..."
-while IFS= read -r -d '' src; do
+shopt -s globstar
+for src in "$DEFAULTS_DIR"/**; do
+  [[ -f "$src" ]] || continue
 
   # Strip the "ai/defaults/" prefix to get the relative path
   rel="${src#${DEFAULTS_DIR}/}"
@@ -64,7 +67,7 @@ while IFS= read -r -d '' src; do
   else
     echo "  exists  $dest (kept)"
   fi
-done < <(find "$DEFAULTS_DIR" -type f -print0 | sort -z)
+done
 
 # ── Generate dynamic state files (depend on starting role) ──
 if [[ ! -f "ai/active_agent.txt" ]]; then
