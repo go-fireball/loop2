@@ -4,11 +4,13 @@ core_rules:
   - roles must not edit outside allowed files
 baton_rules:
   - ai/active_agent.txt is the source of truth for the current role
+  - runner is the only component that may update ai/active_agent.txt and finalize baton transitions
   - ai/next_agent.yaml carries baton state only (next_role, optional handoff_notes, optional return_to when HUMAN)
   - role behavior and prompt routing must come from static role mapping in the runner, never from generated YAML
   - if active agent mismatch, print exactly WAITING FOR BATON
   - on success, print exactly FINISHED: HANDING TO <ROLE>
   - if human clarification is needed, write ai/user-questions.yaml and print exactly WAITING FOR USER
+  - agents must never modify ai/active_agent.txt or ai/next_agent.yaml to force baton transitions
 edit_rules:
   - only edit allowed files listed in the current role prompt
 stop_rules:

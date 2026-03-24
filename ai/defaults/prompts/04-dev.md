@@ -25,9 +25,7 @@
 - `ai/review.md` (implementation notes)
 - `ai/decision-lock.yaml`
 - `ai/user-questions.yaml`
-- `ai/next_agent.yaml`
 - `ai/next_agent.md` (optional)
-- `ai/active_agent.txt`
 - `ai/iterations/ITER-0001.md`
 
 ## 4) Required actions
@@ -37,17 +35,13 @@
 - Add/update tests proportionally.
 - Record deviations and risks in `ai/review.md`.
 - If blocked by a decision only a human can make:
-  1. Write questions to `ai/user-questions.yaml` with `status: waiting` and `return_to_role: DEV`.
-  2. Generate next_agent.yaml for HUMAN:
-     `./scripts/generate-next-agent.sh HUMAN --return-to DEV --notes "implementation blocked on human decision"`
-  3. Write `ai/next_agent.md` explaining the blocker.
-  4. Do not modify `ai/active_agent.txt`; runner will hand baton to HUMAN on `WAITING FOR USER`.
-  5. Output exactly `WAITING FOR USER` and stop.
+  - Write questions to `ai/user-questions.yaml` with `status: waiting` and `return_to_role: DEV`.
+  - Optionally write `ai/next_agent.md` with blocker context.
+  - Do NOT modify `ai/active_agent.txt` or `ai/next_agent.yaml`; runner owns baton transitions.
+  - Output exactly `WAITING FOR USER` and stop.
 
 ## 5) End-of-turn required steps
 - Append iteration decision line.
-- Generate next_agent.yaml with handoff context:
-  `./scripts/generate-next-agent.sh VALIDATOR --notes "what was implemented | files changed | tests added | known risks"`
 - Write `ai/next_agent.md` with detailed handoff notes for the next role.
 - Print exact message:
 `FINISHED: HANDING TO VALIDATOR`

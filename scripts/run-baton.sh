@@ -167,8 +167,22 @@ fi
 
 current_agent="$(tr -d '[:space:]' < ai/active_agent.txt 2>/dev/null || echo "")"
 if [[ "$current_agent" == "HUMAN" ]]; then
-  echo "Baton is held by HUMAN. Answer ai/user-questions.yaml then run ./scripts/resume-baton.sh"
-  exit 0
+  status="$(grep "^status:" ai/user-questions.yaml 2>/dev/null | head -1 | sed "s/^status:[[:space:]]*//" | tr -d "[:space:]")"
+  if [[ "$status" != "answered" ]]; then
+    echo "Baton is held by HUMAN. Answer ai/user-questions.yaml, then run ./scripts/resume-baton.sh."
+    exit 0
+  fi
+
+  return_to="$(grep "^return_to:" ai/next_agent.yaml 2>/dev/null | head -1 | sed "s/^return_to:[[:space:]]*//" | tr -d "[:space:]")"
+  if [[ -z "$return_to" || "$return_to" == "HUMAN" ]]; then
+    echo "Cannot resume from HUMAN: ai/next_agent.yaml must include a non-HUMAN return_to."
+    exit 1
+  fi
+
+  printf "%s\n" "$return_to" > ai/active_agent.txt
+  ./scripts/generate-next-agent.sh "$return_to" --notes "Resuming baton after HUMAN answers"
+  current_agent="$return_to"
+  echo "Resumed baton from HUMAN to $return_to"
 fi
 
 setup_iter_branch

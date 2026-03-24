@@ -22,9 +22,7 @@
 - `ai/active_item.yaml`
 - `ai/decision-lock.yaml`
 - `ai/user-questions.yaml`
-- `ai/next_agent.yaml`
 - `ai/next_agent.md` (optional)
-- `ai/active_agent.txt`
 - `ai/iterations/ITER-0001.md`
 
 ## 4) Required actions
@@ -33,18 +31,14 @@
 - DONE: mark item done and hand to PLANNER for next item.
 - REVISE: route baton to role that must fix concrete gaps.
 - ESCALATE: only for allowed human decision categories:
-  1. Write questions to `ai/user-questions.yaml` with `status: waiting` and `return_to_role: REVIEWER`.
-  2. Generate next_agent.yaml for HUMAN:
-     `./scripts/generate-next-agent.sh HUMAN --return-to REVIEWER --notes "escalation requiring human decision"`
-  3. Write `ai/next_agent.md` explaining the escalation.
-  4. Do not modify `ai/active_agent.txt`; runner will hand baton to HUMAN on `WAITING FOR USER`.
-  5. Output exactly `WAITING FOR USER` and stop.
+  - Write questions to `ai/user-questions.yaml` with `status: waiting` and `return_to_role: REVIEWER`.
+  - Optionally write `ai/next_agent.md` with escalation context.
+  - Do NOT modify `ai/active_agent.txt` or `ai/next_agent.yaml`; runner owns baton transitions.
+  - Output exactly `WAITING FOR USER` and stop.
 
 ## 5) End-of-turn required steps
 - Append iteration decision line.
-- Generate next_agent.yaml with handoff context:
-  `./scripts/generate-next-agent.sh <NEXT_ROLE> --notes "review decision | gaps to fix (if REVISE) | what was accepted (if DONE)"`
-  (PLANNER for DONE, specific role for REVISE)
+- Choose `<ROLE>` as PLANNER for DONE or the fix-owner role for REVISE
 - Write `ai/next_agent.md` with detailed handoff notes for the next role.
 - Print exact handoff message matching chosen role:
 `FINISHED: HANDING TO <ROLE>`

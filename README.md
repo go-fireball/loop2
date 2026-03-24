@@ -120,7 +120,7 @@ The `scripts/` folder includes a few helper commands beyond the main runner:
 - `./scripts/bootstrap.sh [ROLE]` — seeds `ai/` from `ai/defaults/` (skip-if-exists) and creates dynamic baton files.
 - `./scripts/check-baton.sh` — validates required files, active role, and YAML structure.
 - `./scripts/generate-next-agent.sh <ROLE> [--notes ...] [--return-to ...]` — writes minimal baton metadata only: `next_role`, optional `handoff_notes`, optional `return_to` (HUMAN only).
-- `./scripts/resume-baton.sh [--force] [ROLE]` — resumes from `HUMAN` after answering `ai/user-questions.yaml`.
+- `./scripts/resume-baton.sh [--force]` — marks human answers as ready; `run-baton.sh` performs the actual baton transition from HUMAN to `return_to`.
 - `./scripts/check-goal.sh` — project-specific acceptance harness for the sample Task Tracker app under `apps/task-tracker/`.
 - `./scripts/validate_baton.py` — YAML schema helper used by `check-baton.sh`.
 
@@ -191,8 +191,8 @@ When any role hits a blocker that requires human judgment:
 2. The agent outputs `WAITING FOR USER` (runner sets `ai/active_agent.txt` to `HUMAN` and writes minimal baton metadata).
 3. The runner exits cleanly. Re-running `run-baton.sh` will **not** proceed — it displays the pending questions and tells the operator to answer them.
 4. The human edits `ai/user-questions.yaml` to fill in answers.
-5. The human runs `./scripts/resume-baton.sh` to hand the baton back to the appropriate AI role.
-6. The resumed agent copies the answered decisions into `ai/decision-lock.yaml` under `approved_decisions` for the audit trail.
+5. The human runs `./scripts/resume-baton.sh` to mark responses ready (without changing baton ownership directly).
+6. On the next `run-baton.sh` invocation, the runner resumes baton ownership to `return_to` and continues execution.
 
 ## Judgments and governance
 
