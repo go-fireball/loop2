@@ -235,6 +235,8 @@ for ((step=1; step<=MAX_STEPS; step++)); do
 
   # ── Pre-step validation ──
   if ! ./scripts/check-baton.sh >/dev/null 2>&1; then
+    echo "Baton validation failed before step $step. Details:"
+    ./scripts/check-baton.sh || true
     echo "[$ts] STEP $step END role=$current_role result=INVALID_STATE" | tee -a ai/logs/baton.log
     exit 1
   fi
@@ -298,6 +300,17 @@ for ((step=1; step<=MAX_STEPS; step++)); do
   fi
 
   if [[ "$new_agent" != "$current_role" && -n "$new_agent" ]]; then
+    # Validate the baton immediately after handoff so a broken handoff
+    # fails on the same step that introduced it.
+    if ! ./scripts/check-baton.sh >/dev/null 2>&1; then
+      echo "Handoff produced an invalid baton state. Details:"
+      ./scripts/check-baton.sh || true
+      echo "[$end_ts] STEP $step END role=$current_role result=INVALID_HANDOFF to=$new_agent" | tee -a ai/logs/baton.log
+      commit_step "$step" "$current_role (invalid handoff)"
+      rm -f "$step_log"
+      exit 1
+    fi
+
     echo "[$end_ts] STEP $step END role=$current_role result=HANDOFF to=$new_agent" | tee -a ai/logs/baton.log
     commit_step "$step" "$current_role"
     rm -f "$step_log"
