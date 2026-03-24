@@ -106,6 +106,9 @@ build_exec_cmd() {
       ;;
     copilot)
       echo "copilot"
+      echo "--model"
+      echo "$MODEL"
+      echo "--allow-all"
       echo "-p"
       echo "$PROMPT"
       ;;
@@ -248,8 +251,15 @@ for ((step=1; step<=MAX_STEPS; step++)); do
 
   step_log="$(mktemp)"
   set +e
-  script -q -c "$(printf '%q ' "${cmd[@]}")" "$step_log"
-  rc=$?
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*)
+      # Windows: 'script' unavailable, fall back to tee
+      "${cmd[@]}" 2>&1 | tee "$step_log"; rc=${PIPESTATUS[0]}
+      ;;
+    *)
+      script -q -c "$(printf '%q ' "${cmd[@]}")" "$step_log"; rc=$?
+      ;;
+  esac
   set -e
 
   # Save full output to per-step log file (for debugging)
