@@ -12,9 +12,10 @@ read:
 allowed_edits:
   - <list of files this role may edit>
 stop_conditions:
-  - WAITING FOR BATON when active agent mismatch
-  - WAITING FOR USER when clarification is required
+  - WAITING FOR BATON when active agent mismatch (must be final non-empty output line)
+  - WAITING FOR USER when clarification is required (must be final non-empty output line)
 success_criteria:
   - <what must be true for handoff>
+  - ai/active_agent.txt and next_role in ai/next_agent.yaml match before turn ends
 handoff_on_success:
   print_exact: HANDOFF TO <NEXT_ROLE>

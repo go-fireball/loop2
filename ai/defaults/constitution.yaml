@@ -5,8 +5,11 @@ core_rules:
 baton_rules:
   - if active agent mismatch, print exactly WAITING FOR BATON
   - baton must be handed off explicitly
+  - on successful completion, update ai/next_agent.yaml next_role and ai/active_agent.txt to the same next role in the same turn
+  - do not leave active agent unchanged on success; only keep role unchanged when explicitly stopping with WAITING FOR BATON
 edit_rules:
   - only edit allowed files listed in the current role prompt
 stop_rules:
-  - if human clarification is needed, print exactly WAITING FOR USER
+  - if human clarification is needed, print exactly WAITING FOR USER as the final non-empty output line
+  - WAITING FOR BATON must be the final non-empty output line with no extra trailing commentary
   - always append an iteration log entry before handoff

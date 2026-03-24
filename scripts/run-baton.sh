@@ -277,16 +277,17 @@ for ((step=1; step<=MAX_STEPS; step++)); do
     exit 1
   fi
 
-  # Detect explicit stop tokens from the AI output using the final non-empty line.
-  # We intentionally avoid broad grep matching because tool logs can include
-  # prompt/file contents with these strings in non-terminal contexts.
-  final_line="$(
-    awk 'NF { line=$0 } END { print line }' "$step_log" \
+  # Detect explicit stop tokens from recent output lines.
+  # We intentionally check a final non-empty output window (rather than only
+  # the absolute last line) because PTY wrappers can append a shell prompt
+  # after model output (for example: "sh-5.2$"), which would hide the token.
+  recent_nonempty_lines="$(
+    awk 'NF { print }' "$step_log" \
       | tr -d '\r' \
-      | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+      | tail -n 20
   )"
 
-  if [[ "$final_line" == "WAITING FOR BATON" ]]; then
+  if printf '%s\n' "$recent_nonempty_lines" | grep -Fxq "WAITING FOR BATON"; then
     echo "[$end_ts] STEP $step END role=$current_role result=WAITING_FOR_BATON" | tee -a ai/logs/baton.log
     commit_step "$step" "$current_role (waiting for baton)"
     rm -f "$step_log"
@@ -338,9 +339,27 @@ for ((step=1; step<=MAX_STEPS; step++)); do
     continue
   fi
 
-  echo "[$end_ts] STEP $step END role=$current_role result=UNEXPECTED (active_agent unchanged: $new_agent)" | tee -a ai/logs/baton.log
-  commit_step "$step" "$current_role (unexpected)"
+  # If active_agent did not move, inspect next_agent.yaml for a partial handoff.
+  next_role="$(grep '^next_role:' ai/next_agent.yaml 2>/dev/null | head -1 | sed 's/^next_role:[[:space:]]*//' | tr -d '[:space:]')"
+  if [[ -n "$next_role" && "$next_role" != "$current_role" ]]; then
+    echo "[$end_ts] STEP $step END role=$current_role result=INVALID_HANDOFF_PARTIAL active_agent=$new_agent next_role=$next_role" | tee -a ai/logs/baton.log
+    commit_step "$step" "$current_role (invalid partial handoff)"
+    rm -f "$step_log"
+    echo ""
+    echo "Detected partial baton update:"
+    echo "  - ai/active_agent.txt is still: $new_agent"
+    echo "  - ai/next_agent.yaml next_role is: $next_role"
+    echo "Both files must move together. Update ai/active_agent.txt and regenerate ai/next_agent.yaml."
+    exit 1
+  fi
+
+  echo "[$end_ts] STEP $step END role=$current_role result=NO_HANDOFF (active_agent unchanged: $new_agent)" | tee -a ai/logs/baton.log
+  commit_step "$step" "$current_role (no handoff)"
   rm -f "$step_log"
+  echo ""
+  echo "No baton handoff detected. The role remained '$new_agent'."
+  echo "If this is intentional, emit 'WAITING FOR BATON' as the final line."
+  echo "Otherwise, update ai/active_agent.txt and ai/next_agent.yaml to the next role."
   exit 1
 done
 
