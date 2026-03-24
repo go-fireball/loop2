@@ -85,17 +85,18 @@ check_cli() {
 
 build_exec_cmd() {
   local prompt="$1"
+  cmd=()
   case "$EXECUTOR" in
     codex)
-      echo "codex"; echo "exec"; echo "--model"; echo "$MODEL"
-      [[ $FULL_AUTO -eq 1 ]] && echo "--full-auto"
-      echo "$prompt"
+      cmd=("codex" "exec" "--model" "$MODEL")
+      [[ $FULL_AUTO -eq 1 ]] && cmd+=("--full-auto")
+      cmd+=("$prompt")
       ;;
     claude)
-      echo "claude"; echo "--model"; echo "$MODEL"; echo "--dangerously-skip-permissions"; echo "-p"; echo "$prompt"
+      cmd=("claude" "--model" "$MODEL" "--dangerously-skip-permissions" "-p" "$prompt")
       ;;
     copilot)
-      echo "copilot"; echo "--model"; echo "$MODEL"; echo "--allow-all"; echo "-p"; echo "$prompt"
+      cmd=("copilot" "--model" "$MODEL" "--allow-all" "-p" "$prompt")
       ;;
   esac
 }
@@ -217,7 +218,7 @@ Strict terminal contract (must output exactly one when ending):
 
   echo "[$ts] STEP $step START role=$current_role executor=$EXECUTOR model=$MODEL" | tee -a ai/logs/baton.log
 
-  mapfile -t cmd < <(build_exec_cmd "$prompt")
+  build_exec_cmd "$prompt"
   if [[ $DRY_RUN -eq 1 ]]; then
     echo "DRY RUN: would invoke: ${cmd[*]}"
     exit 0
