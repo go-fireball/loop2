@@ -277,6 +277,26 @@ for ((step=1; step<=MAX_STEPS; step++)); do
     exit 1
   fi
 
+  # Detect explicit stop tokens from the AI output using the final non-empty line.
+  # We intentionally avoid broad grep matching because tool logs can include
+  # prompt/file contents with these strings in non-terminal contexts.
+  final_line="$(
+    awk 'NF { line=$0 } END { print line }' "$step_log" \
+      | tr -d '\r' \
+      | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+  )"
+
+  if [[ "$final_line" == "WAITING FOR BATON" ]]; then
+    echo "[$end_ts] STEP $step END role=$current_role result=WAITING_FOR_BATON" | tee -a ai/logs/baton.log
+    commit_step "$step" "$current_role (waiting for baton)"
+    rm -f "$step_log"
+    echo ""
+    echo "Agent reported WAITING FOR BATON."
+    echo "Current active agent: $(tr -d '[:space:]' < ai/active_agent.txt 2>/dev/null || echo "UNKNOWN")"
+    echo "Check ai/active_agent.txt and ai/next_agent.yaml, then retry."
+    exit 0
+  fi
+
   # Detect baton state from ai/active_agent.txt (the authoritative source).
   # Do NOT grep log output for signal strings — logs contain file contents
   # (e.g. constitution.yaml, prompt files) that include those strings verbatim,
