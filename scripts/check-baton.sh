@@ -90,6 +90,25 @@ else
   done
 fi
 
+# ── 4. Validate next_agent.yaml next_role matches active_agent.txt ──
+echo ""
+echo "=== Baton sync (active_agent.txt vs next_agent.yaml) ==="
+
+if [[ -s ai/active_agent.txt && -f ai/next_agent.yaml ]]; then
+  active="$(tr -d '[:space:]' < ai/active_agent.txt)"
+  next_role="$(grep '^next_role:' ai/next_agent.yaml | head -1 | sed 's/^next_role:[[:space:]]*//' | tr -d '[:space:]')"
+  if [[ -z "$next_role" ]]; then
+    echo "  FAIL: next_agent.yaml missing 'next_role' field"
+    errors=$((errors + 1))
+  elif [[ "$active" != "$next_role" ]]; then
+    echo "  FAIL: active_agent.txt='$active' does not match next_agent.yaml next_role='$next_role'"
+    echo "        Fix: run ./scripts/generate-next-agent.sh $active"
+    errors=$((errors + 1))
+  else
+    echo "  OK:   active_agent '$active' matches next_agent.yaml next_role"
+  fi
+fi
+
 # ── Summary ──
 echo ""
 if [[ $errors -ne 0 ]]; then
