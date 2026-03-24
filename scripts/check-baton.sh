@@ -104,7 +104,7 @@ if [[ -f ai/next_agent.yaml ]]; then
     echo "  $result"
   fi
 
-  next_role="$(grep '^next_role:' ai/next_agent.yaml | head -1 | sed 's/^next_role:[[:space:]]*//' | tr -d '[:space:]')"
+  next_role="$(sed -n 's/^next_role:[[:space:]]*//p' ai/next_agent.yaml | head -1 | tr -d '[:space:]')"
   if [[ -z "$next_role" ]]; then
     echo "  FAIL: ai/next_agent.yaml missing next_role"
     errors=$((errors + 1))
@@ -124,7 +124,7 @@ if [[ -f ai/next_agent.yaml ]]; then
     fi
   fi
 
-  return_to="$(grep '^return_to:' ai/next_agent.yaml | head -1 | sed 's/^return_to:[[:space:]]*//' | tr -d '[:space:]')"
+  return_to="$(sed -n 's/^return_to:[[:space:]]*//p' ai/next_agent.yaml | head -1 | tr -d '[:space:]')"
   if [[ -n "$return_to" ]]; then
     if [[ "$next_role" != "HUMAN" ]]; then
       echo "  FAIL: return_to is only allowed when next_role is HUMAN"
