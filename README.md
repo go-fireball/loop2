@@ -1,6 +1,6 @@
 # loop
 
-A practical, governed, role-based AI software delivery loop for shipping software work through explicit baton handoffs.
+A practical, governed, role-based AI software delivery loop for shipping software work through explicit baton handoffs across multiple AI executors (not Codex-only).
 
 ## What this repository is
 
@@ -8,6 +8,17 @@ This repo provides a **role-based baton workflow** for migration, bugfix, featur
 - no phase-heavy orchestration framework
 - no background autonomous runtime
 - explicit handoffs via files
+- executor-agnostic operation via a shared file contract (`codex`, `claude`, and `copilot`)
+
+## Functionalities at a glance
+
+- **Role-based baton flow**: PRODUCT_OWNER → ... → REVIEWER with deterministic handoffs in `ai/next_agent.yaml`.
+- **Human-in-the-loop control**: any role can hand off to `HUMAN`, pause execution, and resume after decisions are captured.
+- **Stateful file contract**: delivery state lives in versioned files under `ai/` (not hidden chat memory).
+- **Built-in governance**: constitution, judgment, decision lock, and review artifacts constrain delivery quality.
+- **Backlog + active item management**: PLANNER drives queue selection and decomposition through structured YAML.
+- **CLI automation runner**: stepwise execution, safe stop conditions, optional branch-per-iteration commits.
+- **Multi-executor support**: run the same loop with Codex, Claude, or Copilot using one command surface.
 
 ## Core model
 
@@ -118,7 +129,9 @@ The `scripts/` folder includes a few helper commands beyond the main runner:
 `./scripts/run-baton.sh` repeatedly invokes an AI executor with:
 `Follow ai/next_agent.yaml exactly.`
 
-### Supported executors
+The loop is **not Codex-only**; the same baton process runs across every supported executor.
+
+### Supported executors (same loop contract)
 
 | Executor | CLI required | Default model |
 |----------|-------------|---------------|
@@ -209,7 +222,7 @@ To reduce context bleed:
 
 ## Extensibility
 
-The runner supports Codex, Claude, and Copilot as executors via `--executor`. All three share the same file contract (`ai/active_agent.txt`, `ai/next_agent.yaml`, prompts, and logs). To add a new executor, extend the `build_exec_cmd` and `check_cli` functions in `scripts/run-baton.sh`.
+The runner supports Codex, Claude, and Copilot as executors via `--executor`. All executors follow the same loop contract (`ai/active_agent.txt`, `ai/next_agent.yaml`, prompts, and logs), so you can switch CLIs without changing the process. To add a new executor, extend the `build_exec_cmd` and `check_cli` functions in `scripts/run-baton.sh`.
 
 ## Project structure
 
