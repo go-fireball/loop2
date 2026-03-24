@@ -140,6 +140,8 @@ if [[ -f ai/next_agent.yaml ]]; then
     echo "        expected prompt_file: $expected_prompt"
     echo "        actual prompt_file:   $prompt_file"
     echo "        Fix: run ./scripts/generate-next-agent.sh $next_role"
+    echo "        Do not hand-edit ai/next_agent.yaml fields directly."
+    echo "        Put handoff narrative in ai/next_agent.md (or --notes) instead."
     errors=$((errors + 1))
   else
     echo "  OK:   next_role '$next_role' matches prompt_file"

@@ -42,7 +42,9 @@ if [[ -z "$ROLE" ]]; then
 fi
 
 # ── Role configs ──
-# Each entry: prompt_file | read_files (comma-sep) | allowed_edits (comma-sep) | success_criteria | next_role
+# Each entry defines prompt_file, read_files, allowed_edits, success_criteria, and next_role.
+# NOTE: success_criteria is sourced from these role defaults (the SUCCESS variable below),
+# not from ai/requirements.md or ai/goal.yaml at generation time.
 case "$ROLE" in
   PRODUCT_OWNER)
     PROMPT_FILE="ai/prompts/00-product-owner.md"
@@ -265,6 +267,7 @@ done
   echo "stop_conditions:"
   echo "  - WAITING FOR BATON when active agent mismatch"
   echo "  - WAITING FOR USER when clarification is required"
+  # success_criteria comes from the role mapping above (SUCCESS).
   echo "success_criteria:"
   echo "  - $SUCCESS"
   echo "handoff_on_success:"
