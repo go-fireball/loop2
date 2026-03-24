@@ -109,6 +109,43 @@ if [[ -s ai/active_agent.txt && -f ai/next_agent.yaml ]]; then
   fi
 fi
 
+# ── 5. Validate next_agent prompt_file matches role ──
+echo ""
+echo "=== next_agent prompt_file consistency ==="
+
+if [[ -f ai/next_agent.yaml ]]; then
+  next_role="$(grep '^next_role:' ai/next_agent.yaml | head -1 | sed 's/^next_role:[[:space:]]*//' | tr -d '[:space:]')"
+  prompt_file="$(grep '^prompt_file:' ai/next_agent.yaml | head -1 | sed 's/^prompt_file:[[:space:]]*//' | tr -d '[:space:]')"
+
+  expected_prompt=""
+  case "$next_role" in
+    PRODUCT_OWNER) expected_prompt="ai/prompts/00-product-owner.md" ;;
+    SENIOR_JUDGMENTAL_ENGINEER) expected_prompt="ai/prompts/01-senior-judgmental-engineer.md" ;;
+    ARCHITECT) expected_prompt="ai/prompts/02-architect.md" ;;
+    PLANNER) expected_prompt="ai/prompts/03-planner.md" ;;
+    DEV) expected_prompt="ai/prompts/04-dev.md" ;;
+    VALIDATOR) expected_prompt="ai/prompts/05-validator.md" ;;
+    REVIEWER) expected_prompt="ai/prompts/06-reviewer.md" ;;
+    HUMAN) expected_prompt="N/A" ;;
+  esac
+
+  if [[ -z "$next_role" ]]; then
+    echo "  FAIL: next_agent.yaml missing 'next_role' field"
+    errors=$((errors + 1))
+  elif [[ -z "$prompt_file" ]]; then
+    echo "  FAIL: next_agent.yaml missing 'prompt_file' field"
+    errors=$((errors + 1))
+  elif [[ -n "$expected_prompt" && "$prompt_file" != "$expected_prompt" ]]; then
+    echo "  FAIL: next_agent.yaml role/prompt mismatch for '$next_role'"
+    echo "        expected prompt_file: $expected_prompt"
+    echo "        actual prompt_file:   $prompt_file"
+    echo "        Fix: run ./scripts/generate-next-agent.sh $next_role"
+    errors=$((errors + 1))
+  else
+    echo "  OK:   next_role '$next_role' matches prompt_file"
+  fi
+fi
+
 # ── Summary ──
 echo ""
 if [[ $errors -ne 0 ]]; then
