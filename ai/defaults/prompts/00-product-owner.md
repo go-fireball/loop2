@@ -35,7 +35,7 @@
   2. Generate next_agent.yaml for HUMAN:
      `./scripts/generate-next-agent.sh HUMAN --return-to PRODUCT_OWNER --notes "questions for user | what is blocked"`
   3. Write `ai/next_agent.md` explaining what questions need answers.
-  4. Set `ai/active_agent.txt` to `HUMAN`.
+  4. Do not modify `ai/active_agent.txt`; runner will hand baton to HUMAN on `WAITING FOR USER`.
   5. Output exactly `WAITING FOR USER` and stop.
 
 ## 5) End-of-turn required steps
@@ -44,7 +44,6 @@
 - Generate next_agent.yaml with handoff context:
   `./scripts/generate-next-agent.sh SENIOR_JUDGMENTAL_ENGINEER --notes "summary of what changed | key items to review | any risks"`
 - Write `ai/next_agent.md` with detailed handoff notes for the next role (what you did, what to focus on, any concerns).
-- Set `ai/active_agent.txt` to `SENIOR_JUDGMENTAL_ENGINEER`.
 - Print exact message:
-`HANDOFF TO SENIOR_JUDGMENTAL_ENGINEER`
+`FINISHED: HANDING TO SENIOR_JUDGMENTAL_ENGINEER`
 - Stop.

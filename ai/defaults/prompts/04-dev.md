@@ -41,7 +41,7 @@
   2. Generate next_agent.yaml for HUMAN:
      `./scripts/generate-next-agent.sh HUMAN --return-to DEV --notes "implementation blocked on human decision"`
   3. Write `ai/next_agent.md` explaining the blocker.
-  4. Set `ai/active_agent.txt` to `HUMAN`.
+  4. Do not modify `ai/active_agent.txt`; runner will hand baton to HUMAN on `WAITING FOR USER`.
   5. Output exactly `WAITING FOR USER` and stop.
 
 ## 5) End-of-turn required steps
@@ -49,7 +49,6 @@
 - Generate next_agent.yaml with handoff context:
   `./scripts/generate-next-agent.sh VALIDATOR --notes "what was implemented | files changed | tests added | known risks"`
 - Write `ai/next_agent.md` with detailed handoff notes for the next role.
-- Set `ai/active_agent.txt` to `VALIDATOR`.
 - Print exact message:
-`HANDOFF TO VALIDATOR`
+`FINISHED: HANDING TO VALIDATOR`
 - Stop.

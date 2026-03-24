@@ -37,7 +37,7 @@
   2. Generate next_agent.yaml for HUMAN:
      `./scripts/generate-next-agent.sh HUMAN --return-to REVIEWER --notes "escalation requiring human decision"`
   3. Write `ai/next_agent.md` explaining the escalation.
-  4. Set `ai/active_agent.txt` to `HUMAN`.
+  4. Do not modify `ai/active_agent.txt`; runner will hand baton to HUMAN on `WAITING FOR USER`.
   5. Output exactly `WAITING FOR USER` and stop.
 
 ## 5) End-of-turn required steps
@@ -46,7 +46,6 @@
   `./scripts/generate-next-agent.sh <NEXT_ROLE> --notes "review decision | gaps to fix (if REVISE) | what was accepted (if DONE)"`
   (PLANNER for DONE, specific role for REVISE)
 - Write `ai/next_agent.md` with detailed handoff notes for the next role.
-- Set `ai/active_agent.txt` to that role.
 - Print exact handoff message matching chosen role:
-`HANDOFF TO <ROLE>`
+`FINISHED: HANDING TO <ROLE>`
 - Stop.

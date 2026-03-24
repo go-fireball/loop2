@@ -37,7 +37,6 @@
   3. Generate next_agent.yaml for HUMAN:
      `./scripts/generate-next-agent.sh HUMAN --return-to ARCHITECT --notes "architecture exception required"`
   4. Write `ai/next_agent.md` explaining the exception.
-  5. Set `ai/active_agent.txt` to `HUMAN`.
   6. Output exactly `WAITING FOR USER` and stop.
 
 ## 5) End-of-turn required steps
@@ -45,7 +44,6 @@
 - Generate next_agent.yaml with handoff context:
   `./scripts/generate-next-agent.sh PLANNER --notes "architecture approach | key boundaries | tradeoffs made"`
 - Write `ai/next_agent.md` with detailed handoff notes for the next role.
-- Set `ai/active_agent.txt` to `PLANNER`.
 - Print exact message:
-`HANDOFF TO PLANNER`
+`FINISHED: HANDING TO PLANNER`
 - Stop.

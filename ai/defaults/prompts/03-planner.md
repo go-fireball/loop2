@@ -36,7 +36,7 @@
   2. Generate next_agent.yaml for HUMAN:
      `./scripts/generate-next-agent.sh HUMAN --return-to PLANNER --notes "requirement ambiguity blocks planning"`
   3. Write `ai/next_agent.md` explaining the ambiguity.
-  4. Set `ai/active_agent.txt` to `HUMAN`.
+  4. Do not modify `ai/active_agent.txt`; runner will hand baton to HUMAN on `WAITING FOR USER`.
   5. Output exactly `WAITING FOR USER` and stop.
 
 ## 5) End-of-turn required steps
@@ -44,7 +44,6 @@
 - Generate next_agent.yaml with handoff context:
   `./scripts/generate-next-agent.sh DEV --notes "active item details | implementation plan | files to create or modify"`
 - Write `ai/next_agent.md` with detailed handoff notes for the next role.
-- Set `ai/active_agent.txt` to `DEV`.
 - Print exact message:
-`HANDOFF TO DEV`
+`FINISHED: HANDING TO DEV`
 - Stop.

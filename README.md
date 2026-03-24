@@ -12,7 +12,7 @@ This repo provides a **role-based baton workflow** for migration, bugfix, featur
 
 ## Functionalities at a glance
 
-- **Role-based baton flow**: PRODUCT_OWNER → ... → REVIEWER with deterministic handoffs in `ai/next_agent.yaml`.
+- **Role-based baton flow**: PRODUCT_OWNER → ... → REVIEWER with deterministic handoffs where `ai/active_agent.txt` is authoritative and `ai/next_agent.yaml` is minimal baton metadata.
 - **Human-in-the-loop control**: any role can hand off to `HUMAN`, pause execution, and resume after decisions are captured.
 - **Stateful file contract**: delivery state lives in versioned files under `ai/` (not hidden chat memory).
 - **Built-in governance**: constitution, judgment, decision lock, and review artifacts constrain delivery quality.
@@ -24,9 +24,9 @@ This repo provides a **role-based baton workflow** for migration, bugfix, featur
 
 Relay-race model:
 1. Current role is authoritative in `ai/active_agent.txt`.
-2. Role instructions are routed by `ai/next_agent.yaml`.
-3. Each role follows strict required reads + allowed edits in `ai/prompts/`.
-4. End-of-turn handoff updates baton files and logs one decision line.
+2. `scripts/run-baton.sh` resolves role → prompt file from a static mapping in the runner.
+3. `ai/next_agent.yaml` carries baton state only (`next_role`, optional `handoff_notes`, optional `return_to` when HUMAN).
+4. End-of-turn handoff is parsed from strict terminal output: `FINISHED: HANDING TO <ROLE>`, `WAITING FOR USER`, or `WAITING FOR BATON`.
 
 **State lives in files, not chat memory.**
 
@@ -41,7 +41,7 @@ Default order:
 6. VALIDATOR
 7. REVIEWER
 
-HUMAN is a first-class role in the baton system. Any role that needs human input hands the baton to HUMAN (sets `ai/active_agent.txt` to `HUMAN`), which blocks the runner until the human answers and resumes.
+HUMAN is a first-class role in the baton system. Any role that needs human input ends with `WAITING FOR USER`; the runner then hands baton ownership to `HUMAN` and blocks until answers are provided and the baton is resumed.
 
 After REVIEWER:
 - Done -> PLANNER (next item)
@@ -108,9 +108,9 @@ If you already have the repo cloned:
    ```bash
    ./scripts/check-baton.sh
    ```
-4. In a fresh AI session, run the baton instruction:
-   ```
-   Follow ai/next_agent.yaml exactly.
+4. Run the baton runner:
+   ```bash
+   ./scripts/run-baton.sh --executor <codex|claude|copilot>
    ```
 
 ## Script reference
@@ -119,15 +119,14 @@ The `scripts/` folder includes a few helper commands beyond the main runner:
 
 - `./scripts/bootstrap.sh [ROLE]` — seeds `ai/` from `ai/defaults/` (skip-if-exists) and creates dynamic baton files.
 - `./scripts/check-baton.sh` — validates required files, active role, and YAML structure.
-- `./scripts/generate-next-agent.sh <ROLE> [--notes ...] [--return-to ...]` — writes `ai/next_agent.yaml` for a handoff; `success_criteria` is filled from role defaults in the script (not inferred from `ai/requirements.md` at runtime).
+- `./scripts/generate-next-agent.sh <ROLE> [--notes ...] [--return-to ...]` — writes minimal baton metadata only: `next_role`, optional `handoff_notes`, optional `return_to` (HUMAN only).
 - `./scripts/resume-baton.sh [--force] [ROLE]` — resumes from `HUMAN` after answering `ai/user-questions.yaml`.
 - `./scripts/check-goal.sh` — project-specific acceptance harness for the sample Task Tracker app under `apps/task-tracker/`.
 - `./scripts/validate_baton.py` — YAML schema helper used by `check-baton.sh`.
 
 ## Optional automation runner
 
-`./scripts/run-baton.sh` repeatedly invokes an AI executor with:
-`Follow ai/next_agent.yaml exactly.`
+`./scripts/run-baton.sh` repeatedly invokes an AI executor by reading `ai/active_agent.txt` and resolving role prompts from a static mapping in the runner.
 
 The loop is **not Codex-only**; the same baton process runs across every supported executor.
 
@@ -189,7 +188,7 @@ Disable with `--no-git` if you prefer manual version control.
 When any role hits a blocker that requires human judgment:
 
 1. The agent writes questions to `ai/user-questions.yaml` (the single source of truth for pending questions).
-2. The agent sets `ai/active_agent.txt` to `HUMAN` and outputs `WAITING FOR USER`.
+2. The agent outputs `WAITING FOR USER` (runner sets `ai/active_agent.txt` to `HUMAN` and writes minimal baton metadata).
 3. The runner exits cleanly. Re-running `run-baton.sh` will **not** proceed — it displays the pending questions and tells the operator to answer them.
 4. The human edits `ai/user-questions.yaml` to fill in answers.
 5. The human runs `./scripts/resume-baton.sh` to hand the baton back to the appropriate AI role.
@@ -204,7 +203,7 @@ When any role hits a blocker that requires human judgment:
 
 These files constrain architecture and implementation to reduce overdesign and maintain consistent delivery quality.
 
-`ai/next_agent.yaml` is generated state. Do not hand-edit its structural fields (`next_role`, `prompt_file`, `read`, `allowed_edits`, `stop_conditions`, `success_criteria`); regenerate it with `./scripts/generate-next-agent.sh <ROLE>`. Put narrative handoff details in `ai/next_agent.md` and/or `--notes`.
+`ai/next_agent.yaml` is generated state and must remain minimal: `next_role`, optional `handoff_notes`, optional `return_to` (only when `next_role: HUMAN`). Do not add role behavior fields (like `prompt_file`, `read`, `allowed_edits`, `success_criteria`).
 
 ## Backlog and active item
 
@@ -217,7 +216,7 @@ PLANNER owns selection/splitting; DEV/VALIDATOR/REVIEWER execute and verify.
 
 To reduce context bleed:
 - use a fresh AI session per turn when possible
-- always start with `Follow ai/next_agent.yaml exactly.`
+- always run through `./scripts/run-baton.sh` so prompt routing comes from static runner mapping
 - rely on files under `ai/` as the process backbone
 
 ## Extensibility
