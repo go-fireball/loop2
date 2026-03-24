@@ -16,3 +16,5 @@ python_only_for_data_workloads: true
 nosql_only_when_justified: true
 relational_bias: true
 human_for_high_level_decisions_only: true
+
+baton_transition_owner: runner_only

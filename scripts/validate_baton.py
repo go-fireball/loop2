@@ -12,12 +12,11 @@ REQUIRED_KEYS = {
     "ai/active_item.yaml": ["id", "status"],
     "ai/decision-lock.yaml": ["confirmed_by_user", "blocked_on_user"],
     "ai/user-questions.yaml": ["status", "questions"],
-    "ai/next_agent.yaml": ["next_role", "prompt_file"],
+    "ai/next_agent.yaml": ["next_role"],
 }
 
 
 def validate(filepath):
-    # Normalize path for key lookup
     for suffix in REQUIRED_KEYS:
         if filepath.endswith(suffix):
             key = suffix
@@ -27,7 +26,7 @@ def validate(filepath):
         return True
 
     try:
-        with open(filepath, "r") as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
     except yaml.YAMLError as e:
         print(f"FAIL: {filepath} - invalid YAML: {e}")

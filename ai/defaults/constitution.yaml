@@ -3,15 +3,17 @@ core_rules:
   - baton ownership is authoritative
   - roles must not edit outside allowed files
 baton_rules:
+  - ai/active_agent.txt is the source of truth for the current role
+  - runner is the only component that may update ai/active_agent.txt and finalize baton transitions
+  - ai/next_agent.yaml carries baton state only (next_role, optional handoff_notes, optional return_to when HUMAN)
+  - role behavior and prompt routing must come from static role mapping in the runner, never from generated YAML
   - if active agent mismatch, print exactly WAITING FOR BATON
-  - baton must be handed off explicitly
-  - on successful completion, update ai/next_agent.yaml next_role and ai/active_agent.txt to the same next role in the same turn
-  - never hand-edit ai/next_agent.yaml fields (next_role, prompt_file, read, allowed_edits, stop_conditions, success_criteria); regenerate with ./scripts/generate-next-agent.sh <ROLE>
-  - handoff context belongs in ai/next_agent.md and optional --notes passed to ./scripts/generate-next-agent.sh
-  - do not leave active agent unchanged on success; only keep role unchanged when explicitly stopping with WAITING FOR BATON
+  - on success, print exactly FINISHED: HANDING TO <ROLE>
+  - if human clarification is needed, write ai/user-questions.yaml and print exactly WAITING FOR USER
+  - agents must never modify ai/active_agent.txt or ai/next_agent.yaml to force baton transitions
 edit_rules:
   - only edit allowed files listed in the current role prompt
 stop_rules:
-  - if human clarification is needed, print exactly WAITING FOR USER as the final non-empty output line
+  - WAITING FOR USER must be the final non-empty output line with no extra trailing commentary
   - WAITING FOR BATON must be the final non-empty output line with no extra trailing commentary
   - always append an iteration log entry before handoff

@@ -4,15 +4,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-# ── Defaults ──
 MAX_STEPS=10
 EXECUTOR=""
 MODEL=""
 DRY_RUN=0
 FULL_AUTO=1
 GIT_ENABLED=1
-
-PROMPT="Follow ai/next_agent.yaml exactly."
 
 usage() {
   cat <<'USAGE'
@@ -26,44 +23,25 @@ Options:
   --no-git                            Disable branch-per-iteration git commits
   --dry-run                           Print the command that would run, then exit
   --help                              Show this help
-
-Default models per executor:
-  codex    → gpt-5.4
-  claude   → claude-sonnet-4-6
-  copilot  → claude-sonnet-4-6
-
-Branch-per-iteration:
-  Each run creates a git branch (iter/<ITEM-ID> or iter/<timestamp>) and
-  auto-commits after every baton step. Disable with --no-git.
-
-Examples:
-  ./scripts/run-baton.sh --executor claude
-  ./scripts/run-baton.sh --executor claude --model claude-opus-4-6
-  ./scripts/run-baton.sh --executor codex --model o3 --max-steps 5
-  ./scripts/run-baton.sh --executor copilot --dry-run
-  ./scripts/run-baton.sh --executor claude --no-git
 USAGE
   exit 0
 }
 
-# ── Parse flags ──
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --executor)   EXECUTOR="$2"; shift 2 ;;
-    --model)      MODEL="$2"; shift 2 ;;
-    --max-steps)  MAX_STEPS="$2"; shift 2 ;;
+    --executor) EXECUTOR="$2"; shift 2 ;;
+    --model) MODEL="$2"; shift 2 ;;
+    --max-steps) MAX_STEPS="$2"; shift 2 ;;
     --no-full-auto) FULL_AUTO=0; shift ;;
-    --no-git)     GIT_ENABLED=0; shift ;;
-    --dry-run)    DRY_RUN=1; shift ;;
-    --help)       usage ;;
-    *) echo "Unknown flag: $1"; echo "Run with --help for usage."; exit 1 ;;
+    --no-git) GIT_ENABLED=0; shift ;;
+    --dry-run) DRY_RUN=1; shift ;;
+    --help) usage ;;
+    *) echo "Unknown flag: $1"; exit 1 ;;
   esac
 done
 
-# ── Validate executor ──
 if [[ -z "$EXECUTOR" ]]; then
   echo "Error: --executor is required. Choose one of: codex, claude, copilot"
-  echo "Run with --help for usage."
   exit 1
 fi
 
@@ -72,100 +50,77 @@ case "$EXECUTOR" in
   *) echo "Error: unknown executor '$EXECUTOR'. Choose one of: codex, claude, copilot"; exit 1 ;;
 esac
 
-# ── Resolve default model per executor if not overridden ──
 if [[ -z "$MODEL" ]]; then
   case "$EXECUTOR" in
-    codex)   MODEL="gpt-5.4" ;;
-    claude)  MODEL="claude-sonnet-4-6" ;;
-    copilot) MODEL="claude-sonnet-4-6" ;;
+    codex) MODEL="gpt-5.4" ;;
+    claude|copilot) MODEL="claude-sonnet-4-6" ;;
   esac
 fi
 
-# ── Build executor command ──
-# Each executor has its own CLI invocation pattern.
-# The function prints the command array elements, one per line.
-build_exec_cmd() {
-  case "$EXECUTOR" in
-    codex)
-      echo "codex"
-      echo "exec"
-      echo "--model"
-      echo "$MODEL"
-      if [[ $FULL_AUTO -eq 1 ]]; then
-        echo "--full-auto"
-      fi
-      echo "$PROMPT"
-      ;;
-    claude)
-      echo "claude"
-      echo "--model"
-      echo "$MODEL"
-      echo "--dangerously-skip-permissions"
-      echo "-p"
-      echo "$PROMPT"
-      ;;
-    copilot)
-      echo "copilot"
-      echo "--model"
-      echo "$MODEL"
-      echo "--allow-all"
-      echo "-p"
-      echo "$PROMPT"
-      ;;
+valid_roles="PRODUCT_OWNER SENIOR_JUDGMENTAL_ENGINEER ARCHITECT PLANNER DEV VALIDATOR REVIEWER HUMAN"
+
+resolve_prompt_file() {
+  case "$1" in
+    PRODUCT_OWNER) echo "ai/prompts/00-product-owner.md" ;;
+    SENIOR_JUDGMENTAL_ENGINEER) echo "ai/prompts/01-senior-judgmental-engineer.md" ;;
+    ARCHITECT) echo "ai/prompts/02-architect.md" ;;
+    PLANNER) echo "ai/prompts/03-planner.md" ;;
+    DEV) echo "ai/prompts/04-dev.md" ;;
+    VALIDATOR) echo "ai/prompts/05-validator.md" ;;
+    REVIEWER) echo "ai/prompts/06-reviewer.md" ;;
+    HUMAN) echo "ai/prompts/human.md" ;;
+    *) return 1 ;;
   esac
 }
 
-# ── Check CLI is installed ──
 check_cli() {
   local cli
   case "$EXECUTOR" in
-    codex)   cli="codex" ;;
-    claude)  cli="claude" ;;
+    codex) cli="codex" ;;
+    claude) cli="claude" ;;
     copilot) cli="copilot" ;;
   esac
-  if ! command -v "$cli" >/dev/null 2>&1; then
-    echo "$cli CLI not found; install it before using --executor $EXECUTOR."
-    exit 1
-  fi
+  command -v "$cli" >/dev/null 2>&1 || { echo "$cli CLI not found"; exit 1; }
 }
 
-# ── Branch-per-iteration ──
-# Creates a branch for this iteration and auto-commits after each step.
+build_exec_cmd() {
+  local prompt="$1"
+  case "$EXECUTOR" in
+    codex)
+      echo "codex"; echo "exec"; echo "--model"; echo "$MODEL"
+      [[ $FULL_AUTO -eq 1 ]] && echo "--full-auto"
+      echo "$prompt"
+      ;;
+    claude)
+      echo "claude"; echo "--model"; echo "$MODEL"; echo "--dangerously-skip-permissions"; echo "-p"; echo "$prompt"
+      ;;
+    copilot)
+      echo "copilot"; echo "--model"; echo "$MODEL"; echo "--allow-all"; echo "-p"; echo "$prompt"
+      ;;
+  esac
+}
+
 ITER_BRANCH=""
 SOURCE_BRANCH=""
 
 setup_iter_branch() {
-  if [[ $GIT_ENABLED -eq 0 ]]; then
-    return
-  fi
-
-  # Ensure we're in a git repo
+  [[ $GIT_ENABLED -eq 0 ]] && return
   if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo "Warning: not a git repo; disabling branch-per-iteration."
+    echo "Warning: not a git repo; disabling git tracking."
     GIT_ENABLED=0
     return
   fi
-
-  # Fail if working tree is dirty — don't mix user changes with iteration commits
   if ! git diff --quiet || ! git diff --cached --quiet; then
-    echo "Warning: uncommitted changes detected; disabling branch-per-iteration."
-    echo "Commit or stash your changes first to enable git tracking."
+    echo "Warning: uncommitted changes detected; disabling git tracking."
     GIT_ENABLED=0
     return
   fi
 
   SOURCE_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-
-  # Derive branch name from active item ID, fall back to timestamp
   local item_id
   item_id="$(grep '^id:' ai/active_item.yaml 2>/dev/null | head -1 | sed 's/^id:[[:space:]]*//')"
-  if [[ -z "$item_id" || "$item_id" == "null" ]]; then
-    item_id="run-$(date -u +%Y%m%d-%H%M%S)"
-  fi
-
+  [[ -z "$item_id" || "$item_id" == "null" ]] && item_id="run-$(date -u +%Y%m%d-%H%M%S)"
   ITER_BRANCH="iter/${item_id}"
-
-  # If branch already exists, append a counter
   if git rev-parse --verify "$ITER_BRANCH" >/dev/null 2>&1; then
     local counter=2
     while git rev-parse --verify "${ITER_BRANCH}-${counter}" >/dev/null 2>&1; do
@@ -173,103 +128,114 @@ setup_iter_branch() {
     done
     ITER_BRANCH="${ITER_BRANCH}-${counter}"
   fi
-
   git checkout -b "$ITER_BRANCH"
-  echo "Created iteration branch: $ITER_BRANCH (from $SOURCE_BRANCH)"
 }
 
-# Commit all changes after a baton step
 commit_step() {
   local step_num="$1"
   local role="$2"
-
-  if [[ $GIT_ENABLED -eq 0 ]]; then
-    return
-  fi
-
-  # Only commit if there are changes
+  [[ $GIT_ENABLED -eq 0 ]] && return
   if git diff --quiet && git diff --cached --quiet && [[ -z "$(git ls-files --others --exclude-standard)" ]]; then
     return
   fi
-
   git add -A
-  git commit -m "$(cat <<EOF
-baton step $step_num: $role
+  git commit -m "baton step $step_num: $role
 
 Executor: $EXECUTOR | Model: $MODEL
-Branch: $ITER_BRANCH
-EOF
-  )"
+Branch: $ITER_BRANCH"
 }
 
-# ── Initial baton validation ──
+extract_handoff_notes() {
+  [[ -f ai/next_agent.yaml ]] || return 0
+  awk '
+    /^handoff_notes:[[:space:]]*\|/ { in_block=1; next }
+    in_block {
+      if ($0 ~ /^  /) {
+        sub(/^  /, "")
+        print
+      } else {
+        exit
+      }
+    }
+  ' ai/next_agent.yaml
+}
+
 if ! ./scripts/check-baton.sh; then
   echo "Baton state is invalid; cannot start."
   exit 1
 fi
 
-# ── Refuse to start when active agent is HUMAN ──
 current_agent="$(tr -d '[:space:]' < ai/active_agent.txt 2>/dev/null || echo "")"
 if [[ "$current_agent" == "HUMAN" ]]; then
-  echo ""
-  echo "Baton is held by HUMAN — waiting for your input."
-  echo ""
-  echo "  1. Answer questions in:  ai/user-questions.yaml"
-  echo "  2. Then run:             ./scripts/resume-baton.sh"
-  echo ""
-  if [[ -f ai/user-questions.yaml ]]; then
-    echo "Current questions:"
-    cat ai/user-questions.yaml
+  status="$(grep "^status:" ai/user-questions.yaml 2>/dev/null | head -1 | sed "s/^status:[[:space:]]*//" | tr -d "[:space:]")"
+  if [[ "$status" != "answered" ]]; then
+    echo "Baton is held by HUMAN. Answer ai/user-questions.yaml, then run ./scripts/resume-baton.sh."
+    exit 0
   fi
-  exit 0
+
+  return_to="$(grep "^return_to:" ai/next_agent.yaml 2>/dev/null | head -1 | sed "s/^return_to:[[:space:]]*//" | tr -d "[:space:]")"
+  if [[ -z "$return_to" || "$return_to" == "HUMAN" ]]; then
+    echo "Cannot resume from HUMAN: ai/next_agent.yaml must include a non-HUMAN return_to."
+    exit 1
+  fi
+
+  printf "%s\n" "$return_to" > ai/active_agent.txt
+  ./scripts/generate-next-agent.sh "$return_to" --notes "Resuming baton after HUMAN answers"
+  current_agent="$return_to"
+  echo "Resumed baton from HUMAN to $return_to"
 fi
 
-# ── Set up iteration branch after validation passes ──
 setup_iter_branch
 
 for ((step=1; step<=MAX_STEPS; step++)); do
   ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-  current_role="$(tr -d '[:space:]' < ai/active_agent.txt 2>/dev/null || echo "UNKNOWN")"
+  current_role="$(tr -d '[:space:]' < ai/active_agent.txt 2>/dev/null || echo "")"
 
-  echo "[$ts] STEP $step START role=$current_role executor=$EXECUTOR model=$MODEL" | tee -a ai/logs/baton.log
-
-  # ── Pre-step validation ──
-  if ! ./scripts/check-baton.sh >/dev/null 2>&1; then
-    echo "Baton validation failed before step $step. Details:"
-    ./scripts/check-baton.sh || true
-    echo "[$ts] STEP $step END role=$current_role result=INVALID_STATE" | tee -a ai/logs/baton.log
+  prompt_file="$(resolve_prompt_file "$current_role" 2>/dev/null || true)"
+  if [[ -z "$prompt_file" ]]; then
+    echo "Invalid role in ai/active_agent.txt: '$current_role'"
+    exit 1
+  fi
+  if [[ ! -f "$prompt_file" ]]; then
+    echo "Prompt file for role '$current_role' not found: $prompt_file"
     exit 1
   fi
 
-  # ── Build the command ──
-  mapfile -t cmd < <(build_exec_cmd)
+  handoff_notes="$(extract_handoff_notes || true)"
+  prompt="Current role: $current_role
+Source of truth: ai/active_agent.txt
+Load and follow this role prompt exactly: $prompt_file
+Do not route from ai/next_agent.yaml role config.
+Strict terminal contract (must output exactly one when ending):
+- FINISHED: HANDING TO <ROLE>
+- WAITING FOR USER
+- WAITING FOR BATON"
+  if [[ -n "$handoff_notes" ]]; then
+    prompt+=$'\n\nHandoff notes:\n'
+    prompt+="$handoff_notes"
+  fi
 
+  echo "[$ts] STEP $step START role=$current_role executor=$EXECUTOR model=$MODEL" | tee -a ai/logs/baton.log
+
+  mapfile -t cmd < <(build_exec_cmd "$prompt")
   if [[ $DRY_RUN -eq 1 ]]; then
     echo "DRY RUN: would invoke: ${cmd[*]}"
     exit 0
   fi
 
   check_cli
-
   step_log="$(mktemp)"
   set +e
   case "$(uname -s)" in
-    MINGW*|MSYS*|CYGWIN*)
-      # Windows: 'script' unavailable, fall back to tee
-      "${cmd[@]}" 2>&1 | tee "$step_log"; rc=${PIPESTATUS[0]}
-      ;;
-    *)
-      script -q -c "$(printf '%q ' "${cmd[@]}")" "$step_log"; rc=$?
-      ;;
+    MINGW*|MSYS*|CYGWIN*) "${cmd[@]}" 2>&1 | tee "$step_log"; rc=${PIPESTATUS[0]} ;;
+    *) script -q -c "$(printf '%q ' "${cmd[@]}")" "$step_log"; rc=$? ;;
   esac
   set -e
 
-  # Save full output to per-step log file (for debugging)
   step_log_file="ai/logs/step-$(printf '%03d' "$step")-${current_role}.log"
   cp "$step_log" "$step_log_file"
 
   end_ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-
   if [[ $rc -ne 0 ]]; then
     echo "[$end_ts] STEP $step END role=$current_role result=FAILED exit_code=$rc" | tee -a ai/logs/baton.log
     commit_step "$step" "$current_role (failed)"
@@ -277,89 +243,66 @@ for ((step=1; step<=MAX_STEPS; step++)); do
     exit 1
   fi
 
-  # Detect explicit stop tokens from recent output lines.
-  # We intentionally check a final non-empty output window (rather than only
-  # the absolute last line) because PTY wrappers can append a shell prompt
-  # after model output (for example: "sh-5.2$"), which would hide the token.
-  recent_nonempty_lines="$(
-    awk 'NF { print }' "$step_log" \
-      | tr -d '\r' \
-      | tail -n 20
-  )"
+  recent_nonempty_lines="$(awk 'NF { print }' "$step_log" | tr -d '\r' | tail -n 40)"
 
   if printf '%s\n' "$recent_nonempty_lines" | grep -Fxq "WAITING FOR BATON"; then
     echo "[$end_ts] STEP $step END role=$current_role result=WAITING_FOR_BATON" | tee -a ai/logs/baton.log
     commit_step "$step" "$current_role (waiting for baton)"
     rm -f "$step_log"
-    echo ""
-    echo "Agent reported WAITING FOR BATON."
-    echo "Current active agent: $(tr -d '[:space:]' < ai/active_agent.txt 2>/dev/null || echo "UNKNOWN")"
-    echo "Check ai/active_agent.txt and ai/next_agent.yaml, then retry."
     exit 0
   fi
 
-  # Detect baton state from ai/active_agent.txt (the authoritative source).
-  # Do NOT grep log output for signal strings — logs contain file contents
-  # (e.g. constitution.yaml, prompt files) that include those strings verbatim,
-  # causing false positives.
-  new_agent="$(tr -d '[:space:]' < ai/active_agent.txt 2>/dev/null || echo "")"
-
-  if [[ "$new_agent" == "HUMAN" ]]; then
+  if printf '%s\n' "$recent_nonempty_lines" | grep -Fxq "WAITING FOR USER"; then
+    ./scripts/generate-next-agent.sh HUMAN --return-to "$current_role" --notes "Blocked on user input from $current_role"
+    printf '%s\n' "HUMAN" > ai/active_agent.txt
     echo "[$end_ts] STEP $step END role=$current_role result=WAITING_FOR_USER" | tee -a ai/logs/baton.log
     commit_step "$step" "$current_role (waiting for user)"
     rm -f "$step_log"
-    echo ""
-    echo "Agent requested human input."
-    if [[ -f ai/user-questions.yaml ]]; then
-      echo "Questions in: ai/user-questions.yaml"
-      echo ""
-      cat ai/user-questions.yaml
-    fi
-    echo ""
-    echo "After answering, run: ./scripts/resume-baton.sh"
     exit 0
   fi
 
-  if [[ "$new_agent" != "$current_role" && -n "$new_agent" ]]; then
-    # Validate the baton immediately after handoff so a broken handoff
-    # fails on the same step that introduced it.
-    if ! ./scripts/check-baton.sh >/dev/null 2>&1; then
-      echo "Handoff produced an invalid baton state. Details:"
-      ./scripts/check-baton.sh || true
-      echo "[$end_ts] STEP $step END role=$current_role result=INVALID_HANDOFF to=$new_agent" | tee -a ai/logs/baton.log
-      commit_step "$step" "$current_role (invalid handoff)"
+  handoff_line="$(printf '%s\n' "$recent_nonempty_lines" | sed -n 's/^FINISHED: HANDING TO \([A-Z_][A-Z_]*\)$/\1/p' | tail -n 1)"
+  if [[ -n "$handoff_line" ]]; then
+    next_role="$handoff_line"
+    found=0
+    for role in $valid_roles; do
+      if [[ "$role" == "$next_role" ]]; then
+        found=1
+        break
+      fi
+    done
+    if [[ $found -eq 0 ]]; then
+      echo "[$end_ts] STEP $step END role=$current_role result=INVALID_HANDOFF unknown_role=$next_role" | tee -a ai/logs/baton.log
       rm -f "$step_log"
       exit 1
     fi
 
-    echo "[$end_ts] STEP $step END role=$current_role result=HANDOFF to=$new_agent" | tee -a ai/logs/baton.log
+    printf '%s\n' "$next_role" > ai/active_agent.txt
+    ./scripts/generate-next-agent.sh "$next_role" --notes "Handoff from $current_role at $end_ts"
+
+    if ! ./scripts/check-baton.sh >/dev/null 2>&1; then
+      echo "Handoff produced invalid baton state."
+      ./scripts/check-baton.sh || true
+      echo "[$end_ts] STEP $step END role=$current_role result=INVALID_HANDOFF to=$next_role" | tee -a ai/logs/baton.log
+      rm -f "$step_log"
+      exit 1
+    fi
+
+    echo "[$end_ts] STEP $step END role=$current_role result=HANDOFF to=$next_role" | tee -a ai/logs/baton.log
     commit_step "$step" "$current_role"
     rm -f "$step_log"
-    [[ $FULL_AUTO -eq 1 ]] || { echo "Stopped due to --no-full-auto after one handoff."; exit 0; }
+    [[ $FULL_AUTO -eq 1 ]] || exit 0
     continue
   fi
 
-  # If active_agent did not move, inspect next_agent.yaml for a partial handoff.
-  next_role="$(grep '^next_role:' ai/next_agent.yaml 2>/dev/null | head -1 | sed 's/^next_role:[[:space:]]*//' | tr -d '[:space:]')"
-  if [[ -n "$next_role" && "$next_role" != "$current_role" ]]; then
-    echo "[$end_ts] STEP $step END role=$current_role result=INVALID_HANDOFF_PARTIAL active_agent=$new_agent next_role=$next_role" | tee -a ai/logs/baton.log
-    commit_step "$step" "$current_role (invalid partial handoff)"
-    rm -f "$step_log"
-    echo ""
-    echo "Detected partial baton update:"
-    echo "  - ai/active_agent.txt is still: $new_agent"
-    echo "  - ai/next_agent.yaml next_role is: $next_role"
-    echo "Both files must move together. Update ai/active_agent.txt and regenerate ai/next_agent.yaml."
-    exit 1
-  fi
-
-  echo "[$end_ts] STEP $step END role=$current_role result=NO_HANDOFF (active_agent unchanged: $new_agent)" | tee -a ai/logs/baton.log
-  commit_step "$step" "$current_role (no handoff)"
+  echo "[$end_ts] STEP $step END role=$current_role result=INVALID_OUTPUT" | tee -a ai/logs/baton.log
+  commit_step "$step" "$current_role (invalid output)"
   rm -f "$step_log"
-  echo ""
-  echo "No baton handoff detected. The role remained '$new_agent'."
-  echo "If this is intentional, emit 'WAITING FOR BATON' as the final line."
-  echo "Otherwise, update ai/active_agent.txt and ai/next_agent.yaml to the next role."
+  echo "Agent output did not include a valid terminal contract line."
+  echo "Expected one of:"
+  echo "  FINISHED: HANDING TO <ROLE>"
+  echo "  WAITING FOR USER"
+  echo "  WAITING FOR BATON"
   exit 1
 done
 
