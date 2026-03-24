@@ -108,7 +108,7 @@ The `scripts/` folder includes a few helper commands beyond the main runner:
 
 - `./scripts/bootstrap.sh [ROLE]` — seeds `ai/` from `ai/defaults/` (skip-if-exists) and creates dynamic baton files.
 - `./scripts/check-baton.sh` — validates required files, active role, and YAML structure.
-- `./scripts/generate-next-agent.sh <ROLE> [--notes ...] [--return-to ...]` — writes `ai/next_agent.yaml` and `ai/next_agent.md` for a handoff.
+- `./scripts/generate-next-agent.sh <ROLE> [--notes ...] [--return-to ...]` — writes `ai/next_agent.yaml` for a handoff; `success_criteria` is filled from role defaults in the script (not inferred from `ai/requirements.md` at runtime).
 - `./scripts/resume-baton.sh [--force] [ROLE]` — resumes from `HUMAN` after answering `ai/user-questions.yaml`.
 - `./scripts/check-goal.sh` — project-specific acceptance harness for the sample Task Tracker app under `apps/task-tracker/`.
 - `./scripts/validate_baton.py` — YAML schema helper used by `check-baton.sh`.
@@ -190,6 +190,8 @@ When any role hits a blocker that requires human judgment:
 - Pending questions for the human operator live in `ai/user-questions.yaml`.
 
 These files constrain architecture and implementation to reduce overdesign and maintain consistent delivery quality.
+
+`ai/next_agent.yaml` is generated state. Do not hand-edit its structural fields (`next_role`, `prompt_file`, `read`, `allowed_edits`, `stop_conditions`, `success_criteria`); regenerate it with `./scripts/generate-next-agent.sh <ROLE>`. Put narrative handoff details in `ai/next_agent.md` and/or `--notes`.
 
 ## Backlog and active item
 
